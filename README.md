@@ -1,1 +1,1 @@
-# Project Intervuo by team pathfinder @aiaudiochallenge by elevenlabs
+# Intervuo by PATHFINDER
