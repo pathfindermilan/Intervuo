@@ -92,10 +92,7 @@ DATABASES = {
        'NAME': os.getenv('DB_NAME'),
        'HOST': os.getenv('DB_HOST'),
        'USER': os.getenv('DB_USER'),
-       'PASSWORD': os.getenv('DB_PASSWORD'),
-        'OPTIONS': {
-                'raise_on_warnings': True
-        }
+       'PASSWORD': os.getenv('DB_PASSWORD')
    }
 }
 
@@ -148,8 +145,8 @@ CORS_ORIGIN_ALLOW_ALL = True
 DJOSER = {
     "RETYPE_USER_PASSWORD" : True,
     'SERIALIZERS' : {
-        'user_create' : 'core.serializers.UserCreateSerializer',
-        'current_user' : 'core.serializers.UserSerializer',
+        'user_create' : 'djoser.serializers.UserCreateSerializer',
+        'current_user' : 'djoser.serializers.UserSerializer',
         'user_delete' : 'djoser.serializers.UserDeleteSerializer',
     }
 }
@@ -162,3 +159,4 @@ SIMPLE_JWT = {
 }
 
 FRONTEND_URL = os.getenv('frontend')
+AUTH_USER_MODEL = os.getenv('AUTH_USER_MODEL')
