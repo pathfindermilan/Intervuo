@@ -35,6 +35,8 @@ else:
     ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS').split(',')
 
 
+APPEND_SLASH = True
+
 # Application definition
 
 INSTALLED_APPS = [
@@ -48,7 +50,9 @@ INSTALLED_APPS = [
     'accounts',
     'djoser',
     'rest_framework',
-    'corsheaders'
+    'rest_framework_simplejwt.token_blacklist',
+    'corsheaders',
+    'django_extensions'
 ]
 
 MIDDLEWARE = [
@@ -142,8 +146,28 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 CORS_ORIGIN_ALLOW_ALL = True
 
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'rest_framework.authentication.TokenAuthentication'
+    ),
+    # 'DEFAULT_RENDERER_CLASSES': (
+    #     'rest_framework.renderers.JSONRenderer',
+    # )
+}
+
 DJOSER = {
-    "RETYPE_USER_PASSWORD" : True,
+    "USER_CREATE_PASSWORD_RETYPE" : True,
+    "SEND_ACTIVATION_EMAIL" : True,
+    "SEND_CONFIRMATION_EMAIL" : True,
+    "SET_PASSWORD_RETYPE" : True,
+    "PASSWORD_RESET_CONFIRM_RETYPE" : True,
+    "PASSWORD_CHANGED_EMAIL_CONFIRMATION" : True,
+    "ACTIVATION_URL" : os.getenv("ACTIVATION_URL"),
+    "PASSWORD_RESET_CONFIRM_URL" : os.getenv("PASSWORD_RESET_CONFIRM_URL"),
+    "EMAIL_FRONTEND_PROTOCOL" : os.getenv("EMAIL_FRONTEND_PROTOCOL"),
+    "EMAIL_FRONTEND_DOMAIN" : os.getenv("EMAIL_FRONTEND_DOMAIN"),
+    "EMAIL_FRONTEND_SITE_NAME" : "Intervuo",
     'SERIALIZERS' : {
         'user_create' : 'djoser.serializers.UserCreateSerializer',
         'current_user' : 'djoser.serializers.UserSerializer',
@@ -154,9 +178,19 @@ DJOSER = {
 SIMPLE_JWT = {
     'AUTH_HEADER_TYPES': ("JWT",),
     'ACCESS_TOKEN_LIFETIME' : timedelta(days=30),
-    'ROTATE_REFRESH_TOKENS': False,
-    'BLACKLIST_AFTER_ROTATION': False
+    'ROTATE_REFRESH_TOKENS': True,
+    'BLACKLIST_AFTER_ROTATION': True
 }
 
 FRONTEND_URL = os.getenv('frontend')
 AUTH_USER_MODEL = os.getenv('AUTH_USER_MODEL')
+
+SEND_CONFIRMATION_EMAIL=True
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = os.getenv('EMAIL_HOST')
+EMAIL_PORT = os.getenv('EMAIL_PORT')
+EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS')
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
+EMAIL_CONFIRMATION_EXPIRATION_TIME = os.getenv('EMAIL_CONFIRMATION_EXPIRATION_TIME')
+DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL')
