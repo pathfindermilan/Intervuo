@@ -18,6 +18,6 @@ Including another URLconf
 from django.urls import path, include
 
 urlpatterns = [
-    path('api/console', include('console.urls')),
+    path('api/console/', include('console.urls')),
     path('api/auth', include('accounts.urls.custom')),
 ]
