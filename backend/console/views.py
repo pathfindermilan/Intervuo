@@ -6,7 +6,7 @@ from rest_framework.viewsets import ModelViewSet
 from rest_framework.response import Response
 from rest_framework import status
 
-from console.serializers import CreateAgentSerializer
+from console.serializers import OrderSerializer
 from console.models import Order
 
 # Create your views here.
@@ -18,7 +18,8 @@ class AgentViewSet(ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_serializer_class(self):
-        return CreateAgentSerializer
+        return OrderSerializer
+
     def get_serializer_context(self):
         return {'request': self.request}
 
