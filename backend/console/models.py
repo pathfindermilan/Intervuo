@@ -51,7 +51,7 @@ class Knowledge(models.Model):
     custom_knowledge = models.TextField(default = '')
 
 class KnowledgeFiles(models.Model):
-    knowledge = models.OneToOneField(Knowledge, on_delete=models.CASCADE)
+    knowledge = models.OneToOneField(Knowledge, on_delete=models.CASCADE, related_name='files')
 
 class KnowledgeFileItem(models.Model):
     file_item = models.FileField(upload_to='knowledge_files/', null=True, blank=True)

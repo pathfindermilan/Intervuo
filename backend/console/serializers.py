@@ -128,3 +128,48 @@ class OrderSerializer(serializers.ModelSerializer):
             self.instance = order
 
             return self.instance
+
+class GetOrdersSerializer(serializers.ModelSerializer):
+    avatar = serializers.SerializerMethodField()
+    agent_name = serializers.SerializerMethodField()
+    language = serializers.SerializerMethodField()
+    voice = serializers.SerializerMethodField()
+    agent_llm = serializers.SerializerMethodField()
+    number_urls = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Order
+        fields = [
+                    'avatar',
+                    'id',
+                    'agent_name',
+                    'status',
+                    'language',
+                    'voice',
+                    'agent_llm',
+                    'number_urls'
+        ]
+
+    def get_avatar(self, order):
+            avatar_field = getattr(order.agent.identity, 'avatar', None)
+            return avatar_field.url if avatar_field else None
+
+    def get_agent_name(self, order):
+        return getattr(order.agent.identity, 'agent_name', None) if order.agent.identity else None
+
+    def get_language(self, order):
+        return getattr(order.agent.identity, 'language', None) if order.agent.identity else None
+
+    def get_voice(self, order):
+        return getattr(order.agent.identity, 'voice', None) if order.agent.identity else None
+
+    def get_agent_llm(self, order):
+        return getattr(order.agent.knowledge, 'agent_llm', None) if order.agent.knowledge else None
+
+    def get_number_urls(self, order):
+        try:
+            if order.agent.knowledge:
+                knowledge_files = order.agent.knowledge.files
+                return knowledge_files.knowledgefileitem_set.count()
+        except AttributeError:
+            return 0

@@ -6,8 +6,8 @@ from rest_framework.viewsets import ModelViewSet
 from rest_framework.response import Response
 from rest_framework import status
 
-from console.serializers import OrderSerializer
-from console.models import Order
+from console.serializers import GetOrdersSerializer, OrderSerializer
+from console.models import Customer, Order
 
 # Create your views here.
 #
@@ -33,7 +33,20 @@ class AgentViewSet(ModelViewSet):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class GetAgentsViewSet(ModelViewSet):
-    pass
+    http_method_names = ['get']
+    permission_classes = [IsAuthenticated]
+
+    def get_serializer_class(self):
+        return GetOrdersSerializer
+
+    def get_queryset(self):
+        customer_id = Customer.objects.only('id').get(user_id=self.request.user.id)
+        return Order.objects.filter(customer_id = customer_id)
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 class ManageAgentViewSet(ModelViewSet):
     pass
