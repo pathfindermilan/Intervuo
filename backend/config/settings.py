@@ -152,20 +152,19 @@ CORS_ORIGIN_ALLOW_ALL = True
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
-        'rest_framework.authentication.TokenAuthentication'
     ),
-    # 'DEFAULT_RENDERER_CLASSES': (
-    #     'rest_framework.renderers.JSONRenderer',
-    # )
+    'DEFAULT_RENDERER_CLASSES': (
+        'rest_framework.renderers.JSONRenderer',
+    )
 }
 
 DJOSER = {
     "USER_CREATE_PASSWORD_RETYPE" : True,
     "SEND_ACTIVATION_EMAIL" : True,
-    "SEND_CONFIRMATION_EMAIL" : True,
+    "SEND_CONFIRMATION_EMAIL" : False,
     "SET_PASSWORD_RETYPE" : True,
     "PASSWORD_RESET_CONFIRM_RETYPE" : True,
-    "PASSWORD_CHANGED_EMAIL_CONFIRMATION" : True,
+    "PASSWORD_CHANGED_EMAIL_CONFIRMATION" : False,
     "ACTIVATION_URL" : os.getenv("ACTIVATION_URL"),
     "PASSWORD_RESET_CONFIRM_URL" : os.getenv("PASSWORD_RESET_CONFIRM_URL"),
     "EMAIL_FRONTEND_PROTOCOL" : os.getenv("EMAIL_FRONTEND_PROTOCOL"),
@@ -197,3 +196,5 @@ EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
 EMAIL_CONFIRMATION_EXPIRATION_TIME = os.getenv('EMAIL_CONFIRMATION_EXPIRATION_TIME')
 DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL')
+
+CELERY_BROKER_URL=os.getenv('CELERY_BROKER_URL')

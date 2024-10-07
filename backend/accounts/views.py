@@ -1,21 +1,61 @@
-from django.shortcuts import render
-
 from djoser.views import UserViewSet
+from djoser import signals
+from djoser.conf import settings
+
+from django.shortcuts import render
 from django.contrib.auth import get_user_model
-from rest_framework_simplejwt.token_blacklist.models import OutstandingToken, \
-                                                            BlacklistedToken
-from rest_framework.decorators import action
-from rest_framework.response import Response
+
 from rest_framework import status
 from rest_framework.views import APIView
+from rest_framework.decorators import action
+from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from rest_framework_simplejwt.token_blacklist.models import OutstandingToken, \
+                                                            BlacklistedToken
 
 from accounts.serializers import CustomUserSerializer
+from accounts.tasks import send_activation_email, send_confirmation_email, \
+                                                  send_password_reset_email
 
 
 User = get_user_model()
 
 class CustomUserViewSet(UserViewSet):
+
+    def perform_create(self, serializer, *args, **kwargs):
+        user = serializer.save(*args, **kwargs)
+        signals.user_registered.send(
+            sender=self.__class__, user=user, request=self.request
+        )
+
+        if settings.SEND_ACTIVATION_EMAIL:
+            send_activation_email.delay(user.id)
+        elif settings.SEND_CONFIRMATION_EMAIL:
+            send_confirmation_email.delay(user.id)
+
+    @action(["post"], detail=False)
+    def resend_activation(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.get_user(is_active=False)
+
+        if not settings.SEND_ACTIVATION_EMAIL:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
+        if user:
+            send_activation_email.delay(user.id, resend = True)
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(["post"], detail=False)
+    def reset_password(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.get_user()
+
+        if user:
+            send_password_reset_email.delay(user.id)
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
