@@ -4,16 +4,17 @@ import Head from 'next/head';
 
 const AgentTalk = () => {
   const { id } = useParams();
-  const [isListening, setIsListening] = useState(false);
+  const [isTalking, setIsTalking] = useState(false);
   const [transcript, setTranscript] = useState('');
+  const [showAlert, setShowAlert] = useState(false);
   const recognitionRef = useRef(null);
   const audioRef = useRef(null);
   const timeoutRef = useRef(null);
+  const videoRef = useRef(null);
 
-  // In a real application, you'd fetch the agent data based on the ID
   const agent = {
     id: parseInt(id),
-    name: "Exam Preparation",
+    name: "Exam Preparation Assistant",
     icon: "🎓"
   };
 
@@ -29,17 +30,15 @@ const AgentTalk = () => {
         const latestTranscript = latestResult[0].transcript;
         setTranscript(latestTranscript);
 
-        // Clear the previous timeout
         if (timeoutRef.current) clearTimeout(timeoutRef.current);
 
-        // Set a new timeout
         timeoutRef.current = setTimeout(() => {
           sendAudioToBackend(latestTranscript);
-        }, 1000); // Wait for 1 second of silence before sending
+        }, 1000);
       };
 
       recognitionRef.current.onend = () => {
-        if (isListening) {
+        if (isTalking) {
           recognitionRef.current.start();
         }
       };
@@ -53,13 +52,14 @@ const AgentTalk = () => {
         clearTimeout(timeoutRef.current);
       }
     };
-  }, [isListening]);
+  }, [isTalking]);
 
-  const toggleListening = () => {
-    setIsListening(prevState => !prevState);
-    if (!isListening) {
+  const toggleTalking = () => {
+    setIsTalking(prevState => !prevState);
+    if (!isTalking) {
       recognitionRef.current.start();
-      setTranscript(''); // Clear the transcript when starting a new session
+      setTranscript('');
+      videoRef.current.play();
     } else {
       recognitionRef.current.stop();
       if (timeoutRef.current) {
@@ -68,6 +68,7 @@ const AgentTalk = () => {
       if (transcript.trim()) {
         sendAudioToBackend(transcript);
       }
+      videoRef.current.pause();
     }
   };
 
@@ -93,6 +94,8 @@ const AgentTalk = () => {
       audioRef.current.play();
     } catch (error) {
       console.error('Error sending audio to backend:', error);
+      setShowAlert(true);
+      setTimeout(() => setShowAlert(false), 5000);
     }
   };
 
@@ -101,20 +104,42 @@ const AgentTalk = () => {
       <Head>
         <title>{agent.name} - Agent Talk</title>
       </Head>
-      <div className="container mx-auto p-4">
-        <h1 className="text-2xl font-bold mb-4">{agent.name}</h1>
-        <div className="text-6xl mb-4">{agent.icon}</div>
-        <button
-          onClick={toggleListening}
-          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-        >
-          {isListening ? '🛑 Stop' : '🎙️ Start'} Listening
-        </button>
-        <div className="mt-4">
+      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900 text-white p-4">
+        <h1 className="text-3xl font-bold mb-4">{agent.name}</h1>
+        <div className="w-48 h-48 rounded-full overflow-hidden mb-6">
+          <video
+            ref={videoRef}
+            loop
+            muted
+            className="w-full h-full object-cover"
+          >
+            <source src="/video.mp4" type="video/mp4" />
+            Your browser does not support the video tag.
+          </video>
+        </div>
+        <div className="mb-8">
+          <button
+            onClick={toggleTalking}
+            className={`px-6 py-3 rounded-full ${
+              isTalking ? 'bg-red-600 hover:bg-red-700' : 'bg-blue-600 hover:bg-blue-700'
+            } transition-colors duration-300`}
+          >
+            {isTalking ? 'Stop Talking' : 'Start Talking'}
+          </button>
+        </div>
+        <div className="w-full max-w-md">
           <h2 className="text-xl font-semibold mb-2">Latest Transcript</h2>
-          <p className="p-2 bg-gray-100 rounded">{transcript}</p>
+          <p className="p-4 bg-gray-800 rounded-lg min-h-[100px] max-h-[200px] overflow-y-auto">
+            {transcript || "Start talking to see your transcript here..."}
+          </p>
         </div>
         <audio ref={audioRef} className="hidden" />
+        {showAlert && (
+          <div className="mt-4 p-4 bg-red-600 text-white rounded-lg">
+            <h3 className="font-bold">Error</h3>
+            <p>There was a problem processing your speech. Please try again.</p>
+          </div>
+        )}
       </div>
     </>
   );
