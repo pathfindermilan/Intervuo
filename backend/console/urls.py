@@ -21,5 +21,4 @@ urlpatterns = [
     path('list', agent_list, name='list-agents'),
     path('update', agent_update, name='update-agent'),
     path('sync/<uuid:agent_id>/', interview_session, name='sync-agent'),
-
 ]

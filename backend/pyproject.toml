@@ -16,4 +16,7 @@ dependencies = [
     "mysqlclient>=2.2.4",
     "django-extensions>=3.2.3",
     "pillow>=10.4.0",
+    "redis>=5.1.1",
+    "celery>=5.4.0",
+    "flower>=2.0.1",
 ]

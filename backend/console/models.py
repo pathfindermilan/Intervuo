@@ -48,14 +48,14 @@ class Knowledge(models.Model):
     ]
 
     agent_llm = models.CharField(max_length=11, choices=LLM_CHOICES, default=LLM_GPT4o_mini)
-    custom_knowlegde = models.TextField(default = '')
+    custom_knowledge = models.TextField(default = '')
 
 class KnowledgeFiles(models.Model):
-    knowledge = models.OneToOneField(Knowledge, on_delete=models.CASCADE)
+    knowledge = models.OneToOneField(Knowledge, on_delete=models.CASCADE, related_name='files')
 
 class KnowledgeFileItem(models.Model):
     file_item = models.FileField(upload_to='knowledge_files/', null=True, blank=True)
-    knowlegde_files = models.ForeignKey(KnowledgeFiles, on_delete=models.CASCADE)
+    knowledge_files = models.ForeignKey(KnowledgeFiles, on_delete=models.CASCADE)
 
     STATUS_INDEX = 'Indexed'
     STATUS_ACTIVE = 'Active'
