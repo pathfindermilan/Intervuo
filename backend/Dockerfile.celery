@@ -1,6 +1,0 @@
-FROM celery
-WORKDIR /app
-
-COPY . .
-
-CMD ["celery", "-A", "config", "worker", "--loglevel=info"]

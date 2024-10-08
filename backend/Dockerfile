@@ -9,10 +9,13 @@ RUN apt update \
 COPY pyproject.toml uv.lock /backend/
 RUN uv sync --frozen
 
-ENV PATH="/backend/.venv/bin:$PATH"
 
 COPY . /backend/
 
+ENV PATH="/backend/.venv/bin:$PATH"
+
+RUN chown -R root:root /backend
 RUN chmod +x docker-entrypoint.sh
 RUN chmod +x wait-for-it.sh
+
 EXPOSE 8001

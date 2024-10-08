@@ -3,9 +3,15 @@ version: "3.8"
 services:
   backend:
     build: ./backend
-    command: ./backend/wait-for-it.sh mysql:3306 -- ./backend/docker-entrypoint.sh
+    command: ./wait-for-it.sh mysql:3306 -- ./docker-entrypoint.sh
     ports:
       - 8001:8001
+    environment:
+      DB_ENGINE: ${DB_ENGINE}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_HOST: mysql
     depends_on:
       - redis
       - mysql
@@ -27,7 +33,6 @@ services:
     container_name: mysql-container
     environment:
       MYSQL_DATABASE: ${DB_NAME}
-      MYSQL_USER: ${DB_USER}
       MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
     ports:
       - "3306:3306"
@@ -46,18 +51,6 @@ services:
       - "8080:80"
     depends_on:
       - mysql
-
-  celery:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile.celery
-    environment:
-      CELERY_BROKER_URL: redis://redis:6379/1
-      CELERY_RESULT_BACKEND: redis://redis:6379/1
-    depends_on:
-      - redis
-    volumes:
-      - .:/app
 
 volumes:
   mysql_data:
