@@ -271,9 +271,9 @@ export default function Component() {
                 </h3>
                 <ul className="list-disc pl-5">
                   <li>Customer service</li>
-                  <li>Education</li>
-                  <li>Healthcare</li>
-                  <li>Legal advice</li>
+                  <li>Education assistance</li>
+                  <li>Health care information</li>
+                  <li>Legal awareness</li>
                 </ul>
               </div>
             </div>
@@ -293,10 +293,13 @@ export default function Component() {
         <Slide className="bg-gray-900">
           <div className="space-y-8 max-w-4xl text-center">
             <h2 className="text-3xl font-semibold">
-              Demo: Creating a Customer Service Agent
+              Demo: Creating a Voice Agent
             </h2>
             <div className="bg-gray-700 w-64 h-36 mx-auto flex items-center justify-center rounded-lg shadow-md">
               <Play className="w-16 h-16 text-blue-300" />
+            </div>
+            <div className="bg-gray-700 w-64 h-16 mx-auto flex items-center justify-center rounded-lg shadow-md">
+              www.intervuo.online
             </div>
           </div>
         </Slide>
