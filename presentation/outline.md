@@ -43,10 +43,8 @@
 - Behaviour (Agent Greeting, Agent Prompt)
 - Knowledge (LLM, Custom Knowledge, Knowledge Files)
 
-3. Upload knowledge base (documents, text)
-4. Customize LLM and interaction settings
-5. Test the agent within Intervuo
-6. Deploy to desired platform or use Intervuo's hosting
+5. Choose from User Agents
+6. Interact from Voice Agents
 
 ## Slide 5: Technology & Architecture
 
@@ -54,7 +52,7 @@
 - Backend: Django-Celery-Redis Stack
   - Django Rest Framework for robust API development
   - Celery for handling asynchronous tasks
-  - Redis as message broker and caching
+  - Redis as message broker
 - Authentication: JSON Web Tokens (JWT) for secure, stateless authentication
 - LLM Integration: OpenAI's GPT-4
 - Database: MySQL for reliable, structured data storage
