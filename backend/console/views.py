@@ -1,4 +1,7 @@
 from django.shortcuts import render
+from django.db import transaction
+from django.http import FileResponse
+from django.conf import settings
 
 from rest_framework.decorators import api_view
 from rest_framework.permissions import IsAuthenticated
@@ -6,12 +9,14 @@ from rest_framework.viewsets import ModelViewSet
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.views import APIView
+from rest_framework.exceptions import NotFound
 
 from console.serializers import GetOrdersSerializer, OrderSerializer, \
                                 GetOrderSerializer, ManageOrderSerializer
 from console.models import Customer, Order
 
-from django.db import transaction
+import os
 
 class AgentViewSet(ModelViewSet):
     http_method_names = ['post']
@@ -88,7 +93,34 @@ class ManageAgentViewSet(ModelViewSet):
         instance.delete()
 
 class SecureFileAccessView(APIView):
-    pass
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, order_id, filename):
+        try:
+            order = Order.objects.get(id=order_id, customer__user_id=request.user.id)
+        except Order.DoesNotExist:
+            return Response({"detail": "You don't have permission to access this file"}, status=status.HTTP_403_FORBIDDEN)
+
+        file_path = os.path.join(settings.MEDIA_ROOT, 'files', f"{order_id}__{filename}")
+        if not os.path.exists(file_path):
+            return Response({"detail": "File Not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        return FileResponse(open(file_path, 'rb'))
+
+class SecureAvatarAccessView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, order_id, filename):
+        try:
+            order = Order.objects.get(id=order_id, customer__user_id=request.user.id)
+        except Order.DoesNotExist:
+            return Response({"detail": "You don't have permission to access this file"}, status=status.HTTP_403_FORBIDDEN)
+
+        file_path = os.path.join(settings.MEDIA_ROOT, 'avatars', f"{order_id}__{filename}")
+        if not os.path.exists(file_path):
+            return Response({"detail": "File Not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        return FileResponse(open(file_path, 'rb'))
 
 @api_view(['POST'])
 def interview_session(request, agent_id):
