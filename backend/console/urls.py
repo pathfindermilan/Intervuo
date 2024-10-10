@@ -1,7 +1,7 @@
 from django.urls import path, include
 from console.views import AgentViewSet, ManageAgentViewSet, \
                     GetAgentsViewSet, GetAgentViewSet, \
-                    interview_session
+                    interview_session, SecureFileAccessView
 
 agent_create = AgentViewSet.as_view({
     'post': 'create'
@@ -26,4 +26,5 @@ urlpatterns = [
     path('list/<uuid:order_id>/', single_agent, name='single-agent'),
     path('update/', agent_update, name='update-agent'),
     path('sync/<uuid:agent_id>/', interview_session, name='sync-agent'),
+    path('api/media/files/<str:order_id>__<str:filename>', SecureFileAccessView.as_view(), name='secure-file-access'),
 ]

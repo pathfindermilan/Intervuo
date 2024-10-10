@@ -87,6 +87,9 @@ class ManageAgentViewSet(ModelViewSet):
     def perform_destroy(self, instance):
         instance.delete()
 
+class SecureFileAccessView(APIView):
+    pass
+
 @api_view(['POST'])
 def interview_session(request, agent_id):
     pass
