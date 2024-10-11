@@ -13,8 +13,8 @@ from rest_framework.views import APIView
 from rest_framework.exceptions import NotFound
 
 from console.serializers import GetOrdersSerializer, OrderSerializer, \
-                                GetOrderSerializer, ManageOrderSerializer
-from console.models import Customer, Order
+                                GetOrderSerializer
+from console.models import Customer, Order, KnowledgeFileItem
 
 import os
 
@@ -77,20 +77,58 @@ class GetAgentViewSet(ModelViewSet):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 class ManageAgentViewSet(ModelViewSet):
-    http_method_names = ['get', 'patch', 'delete']
+    http_method_names = ['patch', 'delete']
     permission_classes = [IsAuthenticated]
-
-    def get_serializer_class(self):
-        if self.request.method == 'GET':
-            return GetOrderSerializer
-        return ManageOrderSerializer
+    serializer_class = OrderSerializer
+    lookup_field = 'id'
 
     def get_queryset(self):
-        customer_id = Customer.objects.only('id').get(user_id=self.request.user.id)
-        return Order.objects.filter(customer_id = customer_id)
+        order_id = self.kwargs.get(self.lookup_field)
+        customer = Customer.objects.only('id').get(user_id=self.request.user.id)
+        return Order.objects.filter(id=order_id, customer=customer)
 
+    @transaction.atomic
     def perform_destroy(self, instance):
+        if instance.agent:
+            if hasattr(instance.agent, 'identity'):
+                identity = instance.agent.identity
+                if identity.avatar:
+                    identity.avatar.delete(save=False)
+                identity.delete()
+
+            if hasattr(instance.agent, 'behaviour'):
+                instance.agent.behaviour.delete()
+
+            if hasattr(instance.agent, 'knowledge'):
+                knowledge = instance.agent.knowledge
+                if hasattr(knowledge, 'knowledgefileitem'):
+                    file_items = KnowledgeFileItem.objects.filter(knowledge=knowledge)
+                    for file_item in file_items:
+                        if file_item.file_item:
+                            file_item.file_item.delete(save=False)
+                        file_item.delete()
+                knowledge.delete()
+
+            # Delete the agent
+            instance.agent.delete()
+
+        # Delete the order
         instance.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @transaction.atomic
+    def update(self, request, *args, **kwargs):
+
+        partial = kwargs.pop('partial', True)
+        instance = self.get_object()
+
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        if serializer.is_valid(raise_exception=True):
+            updated_order_data = serializer.save()
+
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class SecureFileAccessView(APIView):
     permission_classes = [IsAuthenticated]
@@ -124,4 +162,16 @@ class SecureAvatarAccessView(APIView):
 
 @api_view(['POST'])
 def interview_session(request, agent_id):
-    pass
+    try:
+        order = Order.objects.get(id=agent_id)
+
+        data = request.data
+        human_text = data.get('human_text')
+        if not human_text:
+            return Response({"detail": "Text is missing!"}, status=status.HTTP_404_NOT_FOUND)
+        return Response({"ai_text": "AI text - default", "finish" : "0", "status" : "1", "score" : "4/10"}, status=status.HTTP_200_OK)
+
+    except Order.DoesNotExist:
+            return Response({'error': 'Order not found'}, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        return JsonResponse({'error': f'{e}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

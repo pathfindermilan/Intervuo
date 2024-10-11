@@ -9,15 +9,39 @@ class IdentitySerializer(serializers.ModelSerializer):
         model = Identity
         fields = ['agent_name', 'language', 'voice', 'avatar']
 
+    def update(self, instance, validated_data):
+        if 'avatar' in validated_data:
+            if instance.avatar:
+                instance.avatar.delete()
+            instance.avatar = validated_data['avatar']
+
+        instance.agent_name = validated_data.get('agent_name', instance.agent_name)
+        instance.language = validated_data.get('language', instance.language)
+        instance.voice = validated_data.get('voice', instance.voice)
+
+        instance.save()
+        return instance
+
 class BehaviourSerializer(serializers.ModelSerializer):
     class Meta:
         model = Behaviour
         fields = ['agent_greeting', 'agent_prompt']
 
+    def update(self, instance, validated_data):
+        instance.agent_greeting = validated_data.get('agent_greeting', instance.agent_greeting)
+        instance.agent_prompt = validated_data.get('agent_prompt', instance.agent_prompt)
+
 class KnowledgeFileItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = KnowledgeFileItem
         fields = ['file_item']
+
+    def update(self, instance, validated_data):
+        if 'file_item' in validated_data:
+            instance.file_item.delete()
+            instance.file_item = validated_data['file_item']
+        instance.save()
+        return instance
 
 # class KnowledgeFilesSerializer(serializers.ModelSerializer):
 #     knowledge_files_set = KnowledgeFileItemSerializer(many=True, write_only=True)
@@ -70,6 +94,24 @@ class KnowledgeSerializer(serializers.ModelSerializer):
 
         return knowledge_instance
 
+    def update(self, instance, validated_data):
+        knowledge_set_data = validated_data.pop('knowledge_set', None)
+
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+
+        if knowledge_set_data:
+            if hasattr(instance, 'knowledgefileitem'):
+                knowledge_file_item_serializer = KnowledgeFileItemSerializer(instance.knowledgefileitem, data=knowledge_set_data)
+            else:
+                knowledge_file_item_serializer = KnowledgeFileItemSerializer(data=knowledge_set_data)
+
+            if knowledge_file_item_serializer.is_valid():
+                knowledge_file_item_serializer.save(knowledge=instance)
+
+        instance.save()
+        return instance
+
 class AgentSerializer(serializers.ModelSerializer):
     identity = IdentitySerializer()
     behaviour = BehaviourSerializer()
@@ -94,6 +136,25 @@ class AgentSerializer(serializers.ModelSerializer):
                 knowledge=knowledge_instance
             )
         return agent
+
+    def update(self, instance, validated_data):
+        identity_data = validated_data.pop('identity', None)
+        behaviour_data = validated_data.pop('behaviour', None)
+        knowledge_data = validated_data.pop('knowledge', None)
+
+        with transaction.atomic():
+            if identity_data:
+                IdentitySerializer().update(instance.identity, identity_data)
+            if behaviour_data:
+                BehaviourSerializer().update(instance.behaviour, behaviour_data)
+            if knowledge_data:
+                KnowledgeSerializer().update(instance.knowledge, knowledge_data)
+
+            for attr, value in validated_data.items():
+                setattr(instance, attr, value)
+            instance.save()
+
+        return instance
 
 class OrderSerializer(serializers.ModelSerializer):
     agent = AgentSerializer()
@@ -139,6 +200,44 @@ class OrderSerializer(serializers.ModelSerializer):
             fileitem_instance.save(fileitem_new_name, ContentFile(fileitem_content), save=False)
             order.agent.knowledge.knowledgefileitem.save()
         return order
+
+    def update(self, instance, validated_data):
+        agent_data = validated_data.pop('agent')
+        user = self.context['request'].user
+
+        if not user.is_authenticated:
+            raise serializers.ValidationError("User is not valid")
+
+        with transaction.atomic():
+            if agent_data:
+                AgentSerializer().update(instance.agent, agent_data)
+
+                avatar_instance = instance.agent.identity.avatar
+                if avatar_instance:
+                    _ , avatar_file_name = avatar_instance.name.split('/')
+                    avatar_new_name = f"{instance.id}__{avatar_file_name}"
+
+                    with avatar_instance.open('rb') as f:
+                        avatar_content = f.read()
+                    avatar_instance.delete(save=False)
+                    avatar_instance.save(avatar_new_name, ContentFile(avatar_content), save=False)
+                    instance.agent.identity.save()
+
+                fileitem_instance = instance.agent.knowledge.knowledgefileitem.file_item
+                _ , fileitem_file_name = fileitem_instance.name.split('/')
+                fileitem_new_name = f"{instance.id}__{fileitem_file_name}"
+
+                with fileitem_instance.open('rb') as f:
+                    fileitem_content = f.read()
+                fileitem_instance.delete(save=False)
+                fileitem_instance.save(fileitem_new_name, ContentFile(fileitem_content), save=False)
+                instance.agent.knowledge.knowledgefileitem.save()
+
+            for attr, value in validated_data.items():
+                setattr(instance, attr, value)
+            instance.save()
+
+        return instance
 
 
 # class GetOrdersSerializer(serializers.ModelSerializer):

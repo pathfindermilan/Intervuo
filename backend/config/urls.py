@@ -27,4 +27,3 @@ urlpatterns = [
     path('api/media/files/<str:order_id>__<str:filename>', SecureFileAccessView.as_view(), name='secure-file-access'),
     path('api/media/avatars/<str:order_id>__<str:filename>', SecureAvatarAccessView.as_view(), name='secure-avatar-access'),
 ]
-# ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
