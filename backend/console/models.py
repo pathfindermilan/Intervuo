@@ -2,7 +2,8 @@ from django.db import models
 from django.contrib.auth import get_user_model
 from django.conf import settings
 from uuid import uuid4
-# Create your models here.
+
+import os
 
 User = get_user_model()
 
@@ -10,52 +11,143 @@ class Identity(models.Model):
     agent_name = models.CharField(max_length=25)
 
     LANGUAGE_EN = 'english'
-    LANGUAGE_ES = 'spanish'
+    LANGUAGE_SA = 'arabic'
+    LANGUAGE_BG = 'bulgarian'
+    LANGUAGE_CN = 'chinese'
+    LANGUAGE_HR = 'croatian'
+    LANGUAGE_CZ = 'czech'
+    LANGUAGE_DK = 'danish'
+    LANGUAGE_NL = 'dutch'
+    LANGUAGE_PH = 'filipino'
+    LANGUAGE_FI = 'finnish'
     LANGUAGE_FR = 'french'
-    LANGUAGE_GER = 'german'
+    LANGUAGE_DE = 'german'
+    LANGUAGE_GR = 'greek'
+    LANGUAGE_IN = 'hindi'
+    LANGUAGE_HU = 'hungarian'
+    LANGUAGE_ID = 'indonesian'
+    LANGUAGE_IT = 'italian'
+    LANGUAGE_JP = 'japanese'
+    LANGUAGE_KR = 'korean'
+    LANGUAGE_MY = 'malay'
+    LANGUAGE_NO = 'norwegian'
+    LANGUAGE_PL = 'polish'
+    LANGUAGE_PR = 'portuguese'
+    LANGUAGE_RO = 'romanian'
+    LANGUAGE_RU = 'russian'
+    LANGUAGE_SK = 'slovak'
+    LANGUAGE_ES = 'spanish'
+    LANGUAGE_SE = 'swedish'
+    LANGUAGE_TR = 'turkish'
+    LANGUAGE_UA = 'ukrainian'
+    LANGUAGE_VN = 'vietnamese'
 
     LANGUAGE_CHOICES = [
         (LANGUAGE_EN, 'English'),
+        (LANGUAGE_SA, 'Arabic'),
+        (LANGUAGE_BG, 'Bulgarian'),
+        (LANGUAGE_CN, 'Chinese'),
+        (LANGUAGE_HR, 'Croatian'),
+        (LANGUAGE_CZ, 'Czech'),
+        (LANGUAGE_DK, 'Danish'),
+        (LANGUAGE_NL, 'Dutch'),
+        (LANGUAGE_PH, 'Filipino'),
+        (LANGUAGE_FI, 'Finnish'),
+        (LANGUAGE_FR, 'French'),
+        (LANGUAGE_DE, 'German'),
+        (LANGUAGE_GR, 'Greek'),
+        (LANGUAGE_IN, 'Hindi'),
+        (LANGUAGE_HU, 'Hungarian'),
+        (LANGUAGE_ID, 'Indonesian'),
+        (LANGUAGE_IT, 'Italian'),
+        (LANGUAGE_JP, 'Japanese'),
+        (LANGUAGE_KR, 'Korean'),
+        (LANGUAGE_MY, 'Malay'),
+        (LANGUAGE_NO, 'Norwegian'),
+        (LANGUAGE_PL, 'Polish'),
+        (LANGUAGE_PR, 'Portuguese'),
+        (LANGUAGE_RO, 'Romanian'),
+        (LANGUAGE_RU, 'Russian'),
+        (LANGUAGE_SK, 'Slovak'),
         (LANGUAGE_ES, 'Spanish'),
-        (LANGUAGE_EN, 'English'),
-        (LANGUAGE_ES, 'Spanish'),
+        (LANGUAGE_SE, 'Swedish'),
+        (LANGUAGE_TR, 'Turkish'),
+        (LANGUAGE_UA, 'Ukrainian'),
+        (LANGUAGE_VN, 'Vietnamese'),
     ]
-    language = models.CharField(max_length=7, choices=LANGUAGE_CHOICES, default=LANGUAGE_EN)
+
+    language = models.CharField(max_length=10, choices=LANGUAGE_CHOICES, default=LANGUAGE_EN)
 
 
     VOICE_ADAM = 'adam'
     VOICE_ALICE = 'alice'
+    VOICE_BILL = 'bill'
+    VOICE_BRIAN = 'brian'
+    VOICE_CALLUM = 'callum'
+    VOICE_CHARLIE = 'charlie'
+    VOICE_CHARLOTTE = 'charlotte'
+    VOICE_CHRIS = 'chris'
+    VOICE_DANIEL = 'daniel'
+    VOICE_GEORGE = 'george'
+    VOICE_LIAM = 'liam'
+    VOICE_LILY = 'lily'
+    VOICE_MATILDA = 'matilda'
+    VOICE_SARAH = 'sarah'
 
     VOICE_CHOICES = [
         (VOICE_ADAM, 'Adam'),
         (VOICE_ALICE, 'Alice'),
+        (VOICE_BILL, 'Bill'),
+        (VOICE_BRIAN, 'Brian'),
+        (VOICE_CALLUM, 'Callum'),
+        (VOICE_CHARLIE, 'Charlie'),
+        (VOICE_CHARLOTTE, 'Charlotte'),
+        (VOICE_CHRIS, 'Chris'),
+        (VOICE_DANIEL, 'Daniel'),
+        (VOICE_GEORGE, 'George'),
+        (VOICE_LIAM, 'Liam'),
+        (VOICE_LILY, 'Lily'),
+        (VOICE_MATILDA, 'Matilda'),
+        (VOICE_SARAH, 'Sarah'),
     ]
-    voice = models.CharField(max_length=5, choices=VOICE_CHOICES, default=VOICE_ADAM)
+
+    voice = models.CharField(max_length=9, choices=VOICE_CHOICES, default=VOICE_ADAM)
 
     avatar = models.ImageField(upload_to='avatars/', null=True, blank=True)
 
 class Behaviour(models.Model):
-    agent_greeting = models.CharField(max_length=250)
-    agent_prompt = models.TextField(default='')
+    agent_greeting = models.CharField(
+        max_length=250,
+        default = "Hello! I'm Intervuo, AI interviewer. Please describe your experience and skills related to the position you're applying for"
+    )
+    agent_prompt = models.TextField(
+        default='''
+        As an AI interviewer, your role is to conduct an interview by assessing the candidate's skills and experience.
+        Begin by acknowledging the candidate's readiness. Prompt the candidate to explain their skills and areas of expertise.
+        If the candidate meets the basic requirements for the position, proceed to ask between 3 and 10 relevant questions.
+        Evaluate each response based on predefined criteria and accumulate a score.
+        If the candidate does not meet initial requirements, gently inform them.
+        After all questions are answered, calculate their final score to determine their qualification for the role.
+        Provide feedback based on the score, stating whether they are suitable for the position.
+        Finally, ensure to clear any session data or memory pertaining to this interview process.'''
+    )
 
 class Knowledge(models.Model):
+
     LLM_GPT4o_mini = "gpt-4o-mini"
-    LLM_GPT4o = "gtp-4o"
+    LLM_GPT4o = "gpt-4o"
 
     LLM_CHOICES = [
-        (LLM_GPT4o_mini, 'GPT-4o mini'),
-        (LLM_GPT4o, 'GPT-4o'),
+        (LLM_GPT4o_mini, 'GPT 4o mini'),
+        (LLM_GPT4o, 'GPT 4o'),
     ]
 
     agent_llm = models.CharField(max_length=11, choices=LLM_CHOICES, default=LLM_GPT4o_mini)
-    custom_knowledge = models.TextField(default = '')
-
-class KnowledgeFiles(models.Model):
-    knowledge = models.OneToOneField(Knowledge, on_delete=models.CASCADE, related_name='files')
+    custom_knowledge = models.TextField(null=False, blank=False)
 
 class KnowledgeFileItem(models.Model):
-    file_item = models.FileField(upload_to='knowledge_files/', null=True, blank=True)
-    knowledge_files = models.ForeignKey(KnowledgeFiles, on_delete=models.CASCADE)
+    file_item = models.FileField(upload_to='files/', null=True, blank=True)
+    knowledge = models.OneToOneField(Knowledge, on_delete=models.CASCADE)
 
     STATUS_INDEX = 'Indexed'
     STATUS_ACTIVE = 'Active'
@@ -67,7 +159,35 @@ class KnowledgeFileItem(models.Model):
         (STATUS_ERROR, 'Error')
     ]
     status_url = models.CharField(
-        max_length=7, choices=STATUS_CHOICES, default=STATUS_INDEX)
+        max_length=7, choices=STATUS_CHOICES, default=STATUS_INDEX, null=True, blank=True)
+
+    def save(self, *args, **kwargs):
+        if self.file_item:
+            self.status_url = self.status_url or self.STATUS_INDEX
+        else:
+            self.status_url = None
+
+        super().save(*args, **kwargs)
+
+
+# class KnowledgeFiles(models.Model):
+#     knowledge = models.OneToOneField(Knowledge, on_delete=models.CASCADE, related_name='files')
+
+# class KnowledgeFileItem(models.Model):
+#     file_item = models.FileField(upload_to='knowledge_files/', null=True, blank=True)
+#     knowledge_files = models.ForeignKey(KnowledgeFiles, on_delete=models.CASCADE)
+
+#     STATUS_INDEX = 'Indexed'
+#     STATUS_ACTIVE = 'Active'
+#     STATUS_ERROR = 'Errored'
+
+#     STATUS_CHOICES = [
+#         (STATUS_INDEX, 'Index'),
+#         (STATUS_ACTIVE, 'Active'),
+#         (STATUS_ERROR, 'Error')
+#     ]
+#     status_url = models.CharField(
+#         max_length=7, choices=STATUS_CHOICES, default=STATUS_INDEX)
 
 class Customer(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
@@ -80,6 +200,6 @@ class Agent(models.Model):
 class Order(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     agent = models.OneToOneField(Agent, on_delete=models.CASCADE)
-    customer = models.ForeignKey(Customer, on_delete=models.CASCADE, related_name='+', blank=True)
+    customer = models.ForeignKey(Customer, on_delete=models.CASCADE, related_name='+', blank=False, null = False)
     created_at = models.DateTimeField(auto_now_add=True)
     status = models.BooleanField(default=False)

@@ -1,10 +1,15 @@
-FROM python:3.12
+FROM python:3.12-bullseye
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
 ENV PYTHONUNBUFFERED=1
 WORKDIR /backend
 
-RUN apt update \
-    && apt install python3-dev default-libmysqlclient-dev gcc curl -y
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+    build-essential \
+    default-libmysqlclient-dev \
+    python3-dev \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
 
 COPY pyproject.toml uv.lock /backend/
 RUN uv sync --frozen
