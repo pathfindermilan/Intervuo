@@ -12,8 +12,7 @@
     "lucide-react": "^0.451.0",
     "next": "14.2.15",
     "react": "^18",
-    "react-dom": "^18",
-    "reveal": "^0.0.4"
+    "react-dom": "^18"
   },
   "devDependencies": {
     "@types/node": "^20",
