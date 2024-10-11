@@ -203,3 +203,7 @@ class Order(models.Model):
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE, related_name='+', blank=False, null = False)
     created_at = models.DateTimeField(auto_now_add=True)
     status = models.BooleanField(default=False)
+
+class Session(models.Model):
+    order = models.OneToOneField(Order, on_delete = models.CASCADE)
+    n_iterations = models.IntegerField()

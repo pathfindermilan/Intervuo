@@ -14,7 +14,9 @@ from rest_framework.exceptions import NotFound
 
 from console.serializers import GetOrdersSerializer, OrderSerializer, \
                                 GetOrderSerializer
-from console.models import Customer, Order, KnowledgeFileItem
+from console.models import Customer, Order, KnowledgeFileItem, Session
+
+from console.ai.generate_text import ai_interviewer
 
 import os
 
@@ -169,9 +171,23 @@ def interview_session(request, agent_id):
         human_text = data.get('human_text')
         if not human_text:
             return Response({"detail": "Text is missing!"}, status=status.HTTP_404_NOT_FOUND)
-        return Response({"ai_text": "AI text - default", "finish" : "0", "status" : "1", "score" : "4/10"}, status=status.HTTP_200_OK)
+
+        session, created = Session.objects.get_or_create(order=order, defaults={'n_iterations': 0})
+
+        session.n_iterations += 1
+        session.save()
+
+        ai_text, finish, interview_status, score = ai_interviewer(human_text, agent=order.agent, session=session)
+
+        return Response({
+            "ai_text": ai_text,
+            "finish": finish,
+            "status": interview_status,
+            "score": score,
+            "iterations": session.n_iterations
+        }, status=status.HTTP_200_OK)
 
     except Order.DoesNotExist:
             return Response({'error': 'Order not found'}, status=status.HTTP_404_NOT_FOUND)
     except Exception as e:
-        return JsonResponse({'error': f'{e}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response({'error': f'{e}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
