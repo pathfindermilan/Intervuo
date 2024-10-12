@@ -12,13 +12,18 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.views import APIView
 from rest_framework.exceptions import NotFound
 
+from langchain.llms import OpenAI
+from langchain.prompts import PromptTemplate
+
 from console.serializers import GetOrdersSerializer, OrderSerializer, \
                                 GetOrderSerializer
-from console.models import Customer, Order, KnowledgeFileItem, Session
-
+from console.models import Customer, Order, KnowledgeFileItem, Session, Applicant
 from console.ai.generate_text import ai_interviewer
 
+from dotenv import load_dotenv
+
 import os
+load_dotenv()
 
 class AgentViewSet(ModelViewSet):
     http_method_names = ['post']
@@ -162,29 +167,151 @@ class SecureAvatarAccessView(APIView):
 
         return FileResponse(open(file_path, 'rb'))
 
-@api_view(['POST'])
-def interview_session(request, agent_id):
+@api_view(['GET'])
+def interview_session_create(request, agent_id):
     try:
         order = Order.objects.get(id=agent_id)
-
         data = request.data
-        human_text = data.get('human_text')
-        if not human_text:
-            return Response({"detail": "Text is missing!"}, status=status.HTTP_404_NOT_FOUND)
+        if request.user.is_authenticated:
+            user_email = request.user.email
+        else:
+            user_email = request.data.get('email')
+            if not user_email:
+                return Response({"detail": "Email is missing"}, status=status.HTTP_403_FORBIDDEN)
 
-        session, created = Session.objects.get_or_create(order=order, defaults={'n_iterations': 0})
+        with transaction.atomic():
+            applicant, _ = Applicant.objects.get_or_create(email = user_email)
+            session, session_created = Session.objects.get_or_create(order=order, applicant=applicant)
+            session.ready = False
+            session.save()
 
-        session.n_iterations += 1
-        session.save()
+            if session_created:
+                greeting = order.agent.behaviour.agent_greeting
+                session.last_question = greeting
+                session.save()
+            else:
+                if session.n_questions == 0 and not session.last_question:
+                    greeting = f"Hi, I am {order.agent.identity.agent_name} and we started a interview previously with you but you didn't specify your skill yet. Can you do that now, please?"
+                elif session.n_questions == 0 and not session.last_answer:
+                    greeting = f"Hi, I am {order.agent.identity.agent_name} and we started a session previously. Tell me when you're ready to start with the questions?"
+                elif session.n_questions != 0:
+                    greeting = f"Hi, I am {order.agent.identity.agent_name} and we started a interview process previously. Tell me when you're ready to to continue with the questions?"
+            session.last_question = greeting
+            session.save()
 
-        ai_text, finish, interview_status, score = ai_interviewer(human_text, agent=order.agent, session=session)
+            return Response({
+                "ai_text": greeting,
+                "final": session.final,
+                "score": session.score,
+                "confidence" : session.confidence
+            }, status=status.HTTP_200_OK)
+
+    except Order.DoesNotExist:
+            return Response({'error': 'Order not found'}, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        return Response({'error': f'{e}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
+def interview_session_flow(request, agent_id):
+    try:
+        order = Order.objects.get(id=agent_id)
+        data = request.data
+        if request.user.is_authenticated:
+            user_email = request.user.email
+        else:
+            user_email = request.data.get('email')
+            if not user_email:
+                return Response({"detail": "Email is missing"}, status=status.HTTP_403_FORBIDDEN)
+
+        with transaction.atomic():
+            applicant = Applicant.objects.get(email = user_email)
+            session = Session.objects.get(order=order, applicant=applicant)
+
+            human_text = request.data.get('text')
+
+            if session.n_questions == 0 and not session.last_question:
+                session.ready = False
+                session.save()
+
+                ai_text = f"We started a interview process with you, can you tell me your skills, please?"
+
+            elif session.n_questions == 0 and not session.last_answer:
+                session.ready = False
+                session.save()
+
+                llm = OpenAI(openai_api_key=os.getenv('OPENAI_API_KEY'), model="gpt-4o-mini", temperature=0)
+
+                prompt = PromptTemplate(
+                    input_variables=["text"],
+                    template="Analyze the following text and determine if it mentions any skills:\n\n{text}\n\nOutput '0' if no skills are mentioned and '1' if skills are mentioned."
+                )
+                response = llm(prompt.format(text=human_text))
+                skills_provided = int(response.strip())
+
+                if skills_provided == 0:
+                    missing_skills_prompt = PromptTemplate(
+                        input_variables=["text"],
+                        template="The user has not provided any skills. Analyze the following text for tone:\n\n{text}\n\nGenerate a polite message asking them to provide their skills again, or indicate if the text is offensive."
+                    )
+                    missing_skills_message = llm(missing_skills_prompt.format(text=human_text)).strip()
+                    ai_text = missing_skills_message
+                else:
+                    skills_description_prompt = PromptTemplate(
+                        input_variables=["text"],
+                        template="Based on the following text, generate a short description that highlights the skills mentioned:\n\n{text}\n\nProvide a concise summary."
+                    )
+                    short_description = llm(skills_description_prompt.format(text=human_text)).strip()
+
+                    applicant.skills = short_description
+                    applicant.save()
+
+                    session.last_question = short_description
+                    session.save()
+
+                    readiness_message_prompt = PromptTemplate(
+                        template="Generate a message to inform the user that their skills have been noted, and they will be asked questions based on their job description and skills. Ask them to give you information when they are ready."
+                    )
+
+                    ai_text = llm(readiness_message_prompt.format()).strip()
+
+            elif session.n_questions == 0 and session.last_answer and not session.ready:
+                llm = OpenAI(openai_api_key=os.getenv('OPENAI_API_KEY'), model="gpt-4o-mini", temperature=0)
+
+                prompt = PromptTemplate(
+                    input_variables=["text"],
+                    template="Analyze the following text and determine if the user mentions that is ready for starting the interview process:\n\n{text}\n\nOutput '0' if the user is not ready and '1' if the user is ready."
+                )
+                response = llm(prompt.format(text=human_text))
+                is_ready = int(response.strip())
+
+                if is_ready == 0:
+                    user_said_no = PromptTemplate(
+                        input_variables=["text"],
+                        template="The user is not ready yet. Analyze the following text for tone:\n\n{text}\n\nGenerate a polite message that you are waiting on them, or indicate if the text is offensive."
+                    )
+                    ai_text = llm(user_said_no.format(text=human_text)).strip()
+                else:
+                    session.last_answer = human_text
+                    session.ready = True
+                    session.n_questions = session.n_questions + 1
+                    session.save()
+                    ai_text = "Super excited to hear that, but the following is not finished yet"
+
+            elif session.n_questions != 0 and session.ready == False:
+                previous_context_prompt = PromptTemplate(
+                    input_variables=["last_question"],
+                    template="The user has had previous conversations. Ask them if they are ready to continue and remind them of what was asked last:\n\nLast question: {last_question}\n\nAre you ready to continue?"
+                )
+                ai_text = llm(previous_context_prompt.format(last_question=session.last_question)).strip()
+            else:
+                ai_text = "These is not finished yet"
 
         return Response({
             "ai_text": ai_text,
-            "finish": finish,
-            "status": interview_status,
-            "score": score,
-            "iterations": session.n_iterations
+            "final": session.final,
+            "score": session.score,
+            "confidence" : session.confidence
         }, status=status.HTTP_200_OK)
 
     except Order.DoesNotExist:

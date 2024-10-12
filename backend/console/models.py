@@ -3,6 +3,8 @@ from django.contrib.auth import get_user_model
 from django.conf import settings
 from uuid import uuid4
 
+from django.core.validators import MinValueValidator, MaxValueValidator
+
 import os
 
 User = get_user_model()
@@ -204,6 +206,33 @@ class Order(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     status = models.BooleanField(default=False)
 
+class Applicant(models.Model):
+    email = models.EmailField(max_length=70, blank=False, unique=True)
+    skills = models.TextField(null=True, blank=True, default = '')
+
 class Session(models.Model):
-    order = models.OneToOneField(Order, on_delete = models.CASCADE)
-    n_iterations = models.IntegerField()
+    order = models.ForeignKey(Order, on_delete = models.CASCADE, related_name='+', blank=False, null = False)
+    n_questions = models.IntegerField(default=0)
+    last_question = models.TextField(null=True, blank=True, default = '')
+    last_answer  = models.TextField(null=True, blank=True, default = '')
+    score = models.FloatField(
+        blank=False,
+        default=0.0,
+        null=False,
+        validators=[
+            MinValueValidator(0.0),
+            MaxValueValidator(100.0)
+        ]
+    )
+    final = models.BooleanField(default=False)
+    confidence = models.FloatField(
+        blank=False,
+        default=100.0,
+        null=False,
+        validators=[
+            MinValueValidator(0.0),
+            MaxValueValidator(100.0)
+        ]
+    )
+    applicant = models.OneToOneField(Applicant, on_delete=models.CASCADE)
+    ready = models.BooleanField(default=False)
