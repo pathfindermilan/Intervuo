@@ -12,7 +12,7 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.views import APIView
 from rest_framework.exceptions import NotFound
 
-from langchain.llms import OpenAI
+from langchain_openai import ChatOpenAI
 from langchain.prompts import PromptTemplate
 
 from console.serializers import GetOrdersSerializer, OrderSerializer, \
@@ -240,13 +240,14 @@ def interview_session_flow(request, agent_id):
                 session.ready = False
                 session.save()
 
-                llm = OpenAI(openai_api_key=os.getenv('OPENAI_API_KEY'), model="gpt-4o-mini", temperature=0)
+                llm = ChatOpenAI(openai_api_key=os.getenv('OPENAI_API_KEY'), model="gpt-4o-mini", temperature=0)
 
                 prompt = PromptTemplate(
                     input_variables=["text"],
                     template="Analyze the following text and determine if it mentions any skills:\n\n{text}\n\nOutput '0' if no skills are mentioned and '1' if skills are mentioned."
                 )
-                response = llm(prompt.format(text=human_text))
+                format_prompt = prompt.format(text=human_text)
+                response = llm.invoke(format_prompt)
                 skills_provided = int(response.strip())
 
                 if skills_provided == 0:
@@ -254,14 +255,16 @@ def interview_session_flow(request, agent_id):
                         input_variables=["text"],
                         template="The user has not provided any skills. Analyze the following text for tone:\n\n{text}\n\nGenerate a polite message asking them to provide their skills again, or indicate if the text is offensive."
                     )
-                    missing_skills_message = llm(missing_skills_prompt.format(text=human_text)).strip()
+                    formated_missing_skills_prompt = missing_skills_prompt.format(text=human_text)
+                    missing_skills_message = llm.invoke(formated_missing_skills_prompt).strip()
                     ai_text = missing_skills_message
                 else:
                     skills_description_prompt = PromptTemplate(
                         input_variables=["text"],
                         template="Based on the following text, generate a short description that highlights the skills mentioned:\n\n{text}\n\nProvide a concise summary."
                     )
-                    short_description = llm(skills_description_prompt.format(text=human_text)).strip()
+                    formated_skills_description_prompt = skills_description_prompt.format(text=human_text)
+                    short_description = llm.invoke(formated_skills_description_prompt).strip()
 
                     applicant.skills = short_description
                     applicant.save()
@@ -272,17 +275,19 @@ def interview_session_flow(request, agent_id):
                     readiness_message_prompt = PromptTemplate(
                         template="Generate a message to inform the user that their skills have been noted, and they will be asked questions based on their job description and skills. Ask them to give you information when they are ready."
                     )
+                    formated_readiness_message_prompt = readiness_message_prompt.format()
 
-                    ai_text = llm(readiness_message_prompt.format()).strip()
+                    ai_text = llm(formated_readiness_message_prompt).strip()
 
             elif session.n_questions == 0 and session.last_answer and not session.ready:
-                llm = OpenAI(openai_api_key=os.getenv('OPENAI_API_KEY'), model="gpt-4o-mini", temperature=0)
+                llm = ChatOpenAI(openai_api_key=os.getenv('OPENAI_API_KEY'), model="gpt-4o-mini", temperature=0)
 
                 prompt = PromptTemplate(
                     input_variables=["text"],
                     template="Analyze the following text and determine if the user mentions that is ready for starting the interview process:\n\n{text}\n\nOutput '0' if the user is not ready and '1' if the user is ready."
                 )
-                response = llm(prompt.format(text=human_text))
+                formated_prompt = prompt.format(text=human_text)
+                response = llm.invoke(formated_prompt)
                 is_ready = int(response.strip())
 
                 if is_ready == 0:
@@ -290,7 +295,8 @@ def interview_session_flow(request, agent_id):
                         input_variables=["text"],
                         template="The user is not ready yet. Analyze the following text for tone:\n\n{text}\n\nGenerate a polite message that you are waiting on them, or indicate if the text is offensive."
                     )
-                    ai_text = llm(user_said_no.format(text=human_text)).strip()
+                    formated_user_said_no = user_said_no.format(text=human_text)
+                    ai_text = llm.invoke(formated_user_said_no).strip()
                 else:
                     session.last_answer = human_text
                     session.ready = True
@@ -303,7 +309,8 @@ def interview_session_flow(request, agent_id):
                     input_variables=["last_question"],
                     template="The user has had previous conversations. Ask them if they are ready to continue and remind them of what was asked last:\n\nLast question: {last_question}\n\nAre you ready to continue?"
                 )
-                ai_text = llm(previous_context_prompt.format(last_question=session.last_question)).strip()
+                formated_previous_context_prompt = previous_context_prompt.format(last_question=session.last_question)
+                ai_text = llm.invoke(formated_previous_context_prompt).strip()
             else:
                 ai_text = "These is not finished yet"
 
