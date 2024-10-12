@@ -248,7 +248,7 @@ def interview_session_flow(request, agent_id):
                 )
                 format_prompt = prompt.format(text=human_text)
                 response = llm.invoke(format_prompt)
-                skills_provided = int(response.strip())
+                skills_provided = int(response["content"].strip())
 
                 if skills_provided == 0:
                     missing_skills_prompt = PromptTemplate(
@@ -256,7 +256,7 @@ def interview_session_flow(request, agent_id):
                         template="The user has not provided any skills. Analyze the following text for tone:\n\n{text}\n\nGenerate a polite message asking them to provide their skills again, or indicate if the text is offensive."
                     )
                     formated_missing_skills_prompt = missing_skills_prompt.format(text=human_text)
-                    missing_skills_message = llm.invoke(formated_missing_skills_prompt).strip()
+                    missing_skills_message = llm.invoke(formated_missing_skills_prompt)["content"].strip()
                     ai_text = missing_skills_message
                 else:
                     skills_description_prompt = PromptTemplate(
@@ -264,7 +264,7 @@ def interview_session_flow(request, agent_id):
                         template="Based on the following text, generate a short description that highlights the skills mentioned:\n\n{text}\n\nProvide a concise summary."
                     )
                     formated_skills_description_prompt = skills_description_prompt.format(text=human_text)
-                    short_description = llm.invoke(formated_skills_description_prompt).strip()
+                    short_description = llm.invoke(formated_skills_description_prompt)["content"].strip()
 
                     applicant.skills = short_description
                     applicant.save()
@@ -277,7 +277,7 @@ def interview_session_flow(request, agent_id):
                     )
                     formated_readiness_message_prompt = readiness_message_prompt.format()
 
-                    ai_text = llm(formated_readiness_message_prompt).strip()
+                    ai_text = llm(formated_readiness_message_prompt)["content"].strip()
 
             elif session.n_questions == 0 and session.last_answer and not session.ready:
                 llm = ChatOpenAI(openai_api_key=os.getenv('OPENAI_API_KEY'), model="gpt-4o-mini", temperature=0)
@@ -288,7 +288,7 @@ def interview_session_flow(request, agent_id):
                 )
                 formated_prompt = prompt.format(text=human_text)
                 response = llm.invoke(formated_prompt)
-                is_ready = int(response.strip())
+                is_ready = int(response["content"].strip())
 
                 if is_ready == 0:
                     user_said_no = PromptTemplate(
@@ -296,7 +296,7 @@ def interview_session_flow(request, agent_id):
                         template="The user is not ready yet. Analyze the following text for tone:\n\n{text}\n\nGenerate a polite message that you are waiting on them, or indicate if the text is offensive."
                     )
                     formated_user_said_no = user_said_no.format(text=human_text)
-                    ai_text = llm.invoke(formated_user_said_no).strip()
+                    ai_text = llm.invoke(formated_user_said_no)["content"].strip()
                 else:
                     session.last_answer = human_text
                     session.ready = True
@@ -310,7 +310,7 @@ def interview_session_flow(request, agent_id):
                     template="The user has had previous conversations. Ask them if they are ready to continue and remind them of what was asked last:\n\nLast question: {last_question}\n\nAre you ready to continue?"
                 )
                 formated_previous_context_prompt = previous_context_prompt.format(last_question=session.last_question)
-                ai_text = llm.invoke(formated_previous_context_prompt).strip()
+                ai_text = llm.invoke(formated_previous_context_prompt)["content"].strip()
             else:
                 ai_text = "These is not finished yet"
 
