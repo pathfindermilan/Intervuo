@@ -248,36 +248,67 @@ def interview_session_flow(request, agent_id):
                 )
                 format_prompt = prompt.format(text=human_text)
                 response = llm.invoke(format_prompt)
-                skills_provided = int(response["content"].strip())
 
-                if skills_provided == 0:
+                if hasattr(response, 'content'):
+                    skills_provided = response.content
+                elif hasattr(response, 'message'):
+                    skills_provided = response.message
+                else:
+                    skills_provided = response
+
+                print("------------------------------")
+                print(skills_provided)
+
+                if skills_provided == "0":
                     missing_skills_prompt = PromptTemplate(
                         input_variables=["text"],
-                        template="The user has not provided any skills. Analyze the following text for tone:\n\n{text}\n\nGenerate a polite message asking them to provide their skills again, or indicate if the text is offensive."
+                        template="You are voice interviewer bot and the job applicant has not provided any skills. Analyze the following text for tone:\n\n{text}\n\nGenerate a polite message asking them to provide their skills again, or indicate if the text is offensive."
                     )
                     formated_missing_skills_prompt = missing_skills_prompt.format(text=human_text)
-                    missing_skills_message = llm.invoke(formated_missing_skills_prompt)["content"].strip()
+                    response = llm.invoke(formated_missing_skills_prompt)
+
+                    if hasattr(response, 'content'):
+                        missing_skills_message = response.content
+                    elif hasattr(response, 'message'):
+                        missing_skills_message = response.message
+                    else:
+                        missing_skills_message = response
+
                     ai_text = missing_skills_message
                 else:
                     skills_description_prompt = PromptTemplate(
                         input_variables=["text"],
-                        template="Based on the following text, generate a short description that highlights the skills mentioned:\n\n{text}\n\nProvide a concise summary."
+                        template="Based on the following text: \n\n{text}\n\n, generate a short description that highlights the skills mentioned. \nProvide a concise summary for what the user know and what does not know!"
                     )
                     formated_skills_description_prompt = skills_description_prompt.format(text=human_text)
-                    short_description = llm.invoke(formated_skills_description_prompt)["content"].strip()
+                    response = llm.invoke(formated_skills_description_prompt)
+
+                    if hasattr(response, 'content'):
+                        short_description = response.content
+                    elif hasattr(response, 'message'):
+                        short_description = response.message
+                    else:
+                        short_description = response
 
                     applicant.skills = short_description
                     applicant.save()
 
-                    session.last_question = short_description
+                    session.last_answer = short_description
                     session.save()
 
                     readiness_message_prompt = PromptTemplate(
-                        template="Generate a message to inform the user that their skills have been noted, and they will be asked questions based on their job description and skills. Ask them to give you information when they are ready."
+                        template="You are voice interviewer bot and the user just Generate a message to inform the user that their skills have been noted, and they will be asked questions based on their job description and skills. Ask them to give you information when they are ready."
                     )
                     formated_readiness_message_prompt = readiness_message_prompt.format()
 
-                    ai_text = llm(formated_readiness_message_prompt)["content"].strip()
+                    response = llm.invoke(formated_readiness_message_prompt)
+
+                    if hasattr(response, 'content'):
+                        ai_text = response.content
+                    elif hasattr(response, 'message'):
+                        ai_text = response.message
+                    else:
+                        ai_text = response
 
             elif session.n_questions == 0 and session.last_answer and not session.ready:
                 llm = ChatOpenAI(openai_api_key=os.getenv('OPENAI_API_KEY'), model="gpt-4o-mini", temperature=0)
@@ -288,31 +319,52 @@ def interview_session_flow(request, agent_id):
                 )
                 formated_prompt = prompt.format(text=human_text)
                 response = llm.invoke(formated_prompt)
-                is_ready = int(response["content"].strip())
 
-                if is_ready == 0:
+                if hasattr(response, 'content'):
+                    is_ready = response.content
+                elif hasattr(response, 'message'):
+                    is_ready = response.message
+                else:
+                    is_ready = response
+
+                if is_ready == "0":
                     user_said_no = PromptTemplate(
                         input_variables=["text"],
-                        template="The user is not ready yet. Analyze the following text for tone:\n\n{text}\n\nGenerate a polite message that you are waiting on them, or indicate if the text is offensive."
+                        template="You are voice interviewer, and the user is not ready yet to be interviewed. Analyze the following text for tone:\n\n{text}\n\nGenerate a polite message that you are waiting on user to be ready to be interviewed. If the text is offensive indicate to the user to use more natural human language."
                     )
                     formated_user_said_no = user_said_no.format(text=human_text)
-                    ai_text = llm.invoke(formated_user_said_no)["content"].strip()
+                    response = llm.invoke(formated_user_said_no)
+
+                    if hasattr(response, 'content'):
+                        ai_text = response.content
+                    elif hasattr(response, 'message'):
+                        ai_text = response.message
+                    else:
+                        ai_text = response
                 else:
                     session.last_answer = human_text
                     session.ready = True
                     session.n_questions = session.n_questions + 1
                     session.save()
-                    ai_text = "Super excited to hear that, but the following is not finished yet"
+                    ai_text = ai_interviewer(text = text, session = session)
 
             elif session.n_questions != 0 and session.ready == False:
+                llm = ChatOpenAI(openai_api_key=os.getenv('OPENAI_API_KEY'), model="gpt-4o-mini", temperature=0)
                 previous_context_prompt = PromptTemplate(
                     input_variables=["last_question"],
-                    template="The user has had previous conversations. Ask them if they are ready to continue and remind them of what was asked last:\n\nLast question: {last_question}\n\nAre you ready to continue?"
+                    template="You are voice interviewer. Ask the user if he is ready to continue with the interview:\n\nLast question: {last_question}\n\nAre you ready to continue?"
                 )
                 formated_previous_context_prompt = previous_context_prompt.format(last_question=session.last_question)
-                ai_text = llm.invoke(formated_previous_context_prompt)["content"].strip()
+                response = llm.invoke(formated_previous_context_prompt)
+
+                if hasattr(response, 'content'):
+                    ai_text = response.content
+                elif hasattr(response, 'message'):
+                    ai_text = response.message
+                else:
+                    ai_text = response
             else:
-                ai_text = "These is not finished yet"
+                ai_text = "This is not finished yet"
 
         return Response({
             "ai_text": ai_text,
