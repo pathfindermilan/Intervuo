@@ -3,7 +3,9 @@ from langchain.prompts import ChatPromptTemplate
 from langchain.chains import LLMChain
 
 
-def ai_interviewer(text, agent):
+def ai_interviewer(text, session):
+
+    agent = session.order.agent
 
     agent_greeting = agent['behaviour']['agent_greeting']
     agent_prompt = agent['behaviour']['agent_prompt']

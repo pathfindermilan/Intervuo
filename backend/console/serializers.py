@@ -191,14 +191,15 @@ class OrderSerializer(serializers.ModelSerializer):
                 order.agent.identity.save()
 
             fileitem_instance = order.agent.knowledge.knowledgefileitem.file_item
-            _ , fileitem_file_name = fileitem_instance.name.split('/')
-            fileitem_new_name = f"{order.id}__{fileitem_file_name}"
+            if fileitem_instance:
+                _ , fileitem_file_name = fileitem_instance.name.split('/')
+                fileitem_new_name = f"{order.id}__{fileitem_file_name}"
 
-            with fileitem_instance.open('rb') as f:
-                fileitem_content = f.read()
-            fileitem_instance.delete(save=False)
-            fileitem_instance.save(fileitem_new_name, ContentFile(fileitem_content), save=False)
-            order.agent.knowledge.knowledgefileitem.save()
+                with fileitem_instance.open('rb') as f:
+                    fileitem_content = f.read()
+                fileitem_instance.delete(save=False)
+                fileitem_instance.save(fileitem_new_name, ContentFile(fileitem_content), save=False)
+                order.agent.knowledge.knowledgefileitem.save()
         return order
 
     def update(self, instance, validated_data):
