@@ -190,16 +190,19 @@ class OrderSerializer(serializers.ModelSerializer):
                 avatar_instance.save(avatar_new_name, ContentFile(avatar_content), save=False)
                 order.agent.identity.save()
 
-            fileitem_instance = order.agent.knowledge.knowledgefileitem.file_item
-            if fileitem_instance:
-                _ , fileitem_file_name = fileitem_instance.name.split('/')
-                fileitem_new_name = f"{order.id}__{fileitem_file_name}"
+            try:
+                fileitem_instance = order.agent.knowledge.knowledgefileitem.file_item
+                if fileitem_instance:
+                    _ , fileitem_file_name = fileitem_instance.name.split('/')
+                    fileitem_new_name = f"{order.id}__{fileitem_file_name}"
 
-                with fileitem_instance.open('rb') as f:
-                    fileitem_content = f.read()
-                fileitem_instance.delete(save=False)
-                fileitem_instance.save(fileitem_new_name, ContentFile(fileitem_content), save=False)
-                order.agent.knowledge.knowledgefileitem.save()
+                    with fileitem_instance.open('rb') as f:
+                        fileitem_content = f.read()
+                    fileitem_instance.delete(save=False)
+                    fileitem_instance.save(fileitem_new_name, ContentFile(fileitem_content), save=False)
+                    order.agent.knowledge.knowledgefileitem.save()
+            except:
+                pass
         return order
 
     def update(self, instance, validated_data):
@@ -224,15 +227,19 @@ class OrderSerializer(serializers.ModelSerializer):
                     avatar_instance.save(avatar_new_name, ContentFile(avatar_content), save=False)
                     instance.agent.identity.save()
 
-                fileitem_instance = instance.agent.knowledge.knowledgefileitem.file_item
-                _ , fileitem_file_name = fileitem_instance.name.split('/')
-                fileitem_new_name = f"{instance.id}__{fileitem_file_name}"
+                try:
+                    fileitem_instance = instance.agent.knowledge.knowledgefileitem.file_item
+                    if fileitem_instance:
+                        _ , fileitem_file_name = fileitem_instance.name.split('/')
+                        fileitem_new_name = f"{instance.id}__{fileitem_file_name}"
 
-                with fileitem_instance.open('rb') as f:
-                    fileitem_content = f.read()
-                fileitem_instance.delete(save=False)
-                fileitem_instance.save(fileitem_new_name, ContentFile(fileitem_content), save=False)
-                instance.agent.knowledge.knowledgefileitem.save()
+                        with fileitem_instance.open('rb') as f:
+                            fileitem_content = f.read()
+                        fileitem_instance.delete(save=False)
+                        fileitem_instance.save(fileitem_new_name, ContentFile(fileitem_content), save=False)
+                        instance.agent.knowledge.knowledgefileitem.save()
+                except:
+                    pass
 
             for attr, value in validated_data.items():
                 setattr(instance, attr, value)
