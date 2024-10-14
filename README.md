@@ -11,7 +11,8 @@ Welcome to **Intervuo**! This is an AI-powered interviewer bot developed by Team
 ## 📺 Demo
 Check out our demo video to see **Intervuo** in action. The video demonstrates how to create an AI interviewer, set up the knowledge base, and conduct interviews seamlessly.
 
-[![Watch the video](https://img.youtube.com/vi/pzrEF5uzz5U/maxresdefault.jpg)](https://www.youtube.com/watch?v=pzrEF5uzz5U)
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/pzrEF5uzz5U" frameborder="0" allowfullscreen></iframe>
 
 ## 🛠️ Technologies Used
 - **11 Labs Voice Models**: For natural speech synthesis.
