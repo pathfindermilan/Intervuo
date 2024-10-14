@@ -9,7 +9,7 @@ Welcome to **Intervuo**! This is an AI-powered interviewer bot developed by Team
 - **Company Knowledge Integration**: Allows users to add company-specific knowledge through files and text.
 
 ## 📺 Demo
-Check out our demo video to see **Intervuo** in action. The video demonstrates how to create an AI interviewer, set up the knowledge base, and conduct interviews seamlessly.
+Check out our demo video to see **Intervuo** in action. 
 ##
 [![Watch the video](https://raw.githubusercontent.com/pathfindermilan/Intervuo/main/frontend/public/11.png)](https://www.youtube.com/watch?v=pzrEF5uzz5U&t=112s)
 
