@@ -20,7 +20,8 @@ Check out our demo video to see **Intervuo** in action.
 - **ChatGPT**: To generate relevant interview questions and evaluate responses.
 - **React**: To create a responsive and interactive web application.
 - **Next.js**: For server-side rendering and optimized performance.
-- **Node.js & Express**: Backend services to handle API requests and data management.
+- **Node.js & Express**: Backend services to handle API requests and data management from frontend site.
+- **Django**: Backend services to handle API requests and data management from AI site.
 
 ## 🌐 How to Use Intervuo
 1. **Register**: Sign up on the **Intero** web application.
@@ -49,4 +50,4 @@ If you have any questions or suggestions, feel free to reach out to us on Linked
 
 ---
 
-Thank you for checking out **Intero**! We’re excited to keep building and improving. Stay tuned for updates!
+Thank you for checking out **Intervo**! We’re excited to keep building and improving. Stay tuned for updates!
