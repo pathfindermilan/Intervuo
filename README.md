@@ -11,7 +11,8 @@ Welcome to **Intervuo**! This is an AI-powered interviewer bot developed by Team
 ## 📺 Demo
 Check out our demo video to see **Intervuo** in action. The video demonstrates how to create an AI interviewer, set up the knowledge base, and conduct interviews seamlessly.
 ##
-https://www.youtube.com/watch?v=pzrEF5uzz5U&t=112s
+[![Watch the video](https://raw.githubusercontent.com/pathfindermilan/Intervuo/main/frontend/public/11.png)](https://www.youtube.com/watch?v=pzrEF5uzz5U&t=112s)
+
 
 
 ## 🛠️ Technologies Used
