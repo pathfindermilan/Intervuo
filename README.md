@@ -50,4 +50,4 @@ If you have any questions or suggestions, feel free to reach out to us on Linked
 
 ---
 
-Thank you for checking out **Intervo**! We’re excited to keep building and improving. Stay tuned for updates!
+Thank you for checking out **Intervuo**! We’re excited to keep building and improving. Stay tuned for updates!
