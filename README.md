@@ -1,6 +1,6 @@
-# Intero: AI-Powered Interviewer Bot 🤖
+# Intervuo: AI-Powered Interviewer Bot 🤖
 
-Welcome to **Intero**! This is an AI-powered interviewer bot developed by Team Pathfinder to revolutionize the recruitment process. Our bot conducts interviews autonomously, providing a consistent and efficient way to assess candidates without human intervention.
+Welcome to **Intervuo**! This is an AI-powered interviewer bot developed by Team Pathfinder to revolutionize the recruitment process. Our bot conducts interviews autonomously, providing a consistent and efficient way to assess candidates without human intervention.
 
 ## 🚀 Features
 - **Automated Interviews**: Conduct interviews with multiple candidates without the need for human involvement.
@@ -18,7 +18,7 @@ Check out our demo video to see **Intero** in action. The video demonstrates how
 - **Next.js**: For server-side rendering and optimized performance.
 - **Node.js & Express**: Backend services to handle API requests and data management.
 
-## 🌐 How to Use Intero
+## 🌐 How to Use Intervuo
 1. **Register**: Sign up on the **Intero** web application.
 2. **Configure AI Interviewer**: 
    - Enter the interviewer's name, language, and voice.
@@ -27,7 +27,7 @@ Check out our demo video to see **Intero** in action. The video demonstrates how
 3. **Start Interviewing**: Use the AI bot to interview candidates in real-time.
 
 ## 🎯 Goals
-**Intero** is still in its early stages. We plan to:
+**Intervuo** is still in its early stages. We plan to:
 - Enhance the bot's ability to ask personalized questions.
 - Improve the user interface for a better experience.
 - Optimize the AI model to provide even more accurate candidate assessments.
