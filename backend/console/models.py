@@ -120,7 +120,7 @@ class Identity(models.Model):
 class Behaviour(models.Model):
     agent_greeting = models.CharField(
         max_length=250,
-        default = "Hello! I'm Intervuo, AI interviewer. Please describe your experience and skills related to the position you're applying for"
+        default = "Hello! I am your AI interviewer. Please describe your experience and skills related to the position you're applying for"
     )
     agent_prompt = models.TextField(
         default='''

@@ -191,11 +191,11 @@ def interview_session_create(request, agent_id):
                 session.save()
             else:
                 if session.n_questions == 0 and not session.last_question:
-                    greeting = f"Hi, I am {order.agent.identity.agent_name} and we started a interview previously with you but you didn't specify your skill yet. Can you do that now, please?"
+                    greeting = f"Hеllo again, I am {order.agent.identity.agent_name}, your ai interviewer and we started a interview previously. Please describe your experience and skills related to the position you're applying for"
                 elif session.n_questions == 0 and not session.last_answer:
-                    greeting = f"Hi, I am {order.agent.identity.agent_name} and we started a session previously. Tell me when you're ready to start with the questions?"
+                    greeting = f"Hi, I am {order.agent.identity.agent_name} and we started a session. Tell me when you're ready to start with the questions?"
                 elif session.n_questions != 0:
-                    greeting = f"Hi, I am {order.agent.identity.agent_name} and we started a interview process previously. Tell me when you're ready to to continue with the questions?"
+                    greeting = f"Hi, I am {order.agent.identity.agent_name} and we started a interview process. Tell me when you're ready to to continue with the questions?"
             session.last_question = greeting
             session.save()
 
@@ -342,12 +342,9 @@ def interview_session_flow(request, agent_id):
                     else:
                         ai_text = response
                 else:
-                    session.last_answer = human_text
                     session.ready = True
-                    session.n_questions = session.n_questions + 1
                     session.save()
-                    ai_text = ai_interviewer(text = text, session = session)
-
+                    score, ai_text = ai_interviewer(text = human_text, session = session)
             elif session.n_questions != 0 and session.ready == False:
                 llm = ChatOpenAI(openai_api_key=os.getenv('OPENAI_API_KEY'), model="gpt-4o-mini", temperature=0)
                 previous_context_prompt = PromptTemplate(
@@ -364,7 +361,10 @@ def interview_session_flow(request, agent_id):
                 else:
                     ai_text = response
             else:
-                ai_text = "This is not finished yet"
+                score, ai_text = ai_interviewer(text = human_text, session = session)
+
+                if session.final:
+                    ai_text = f"Thanks for your time, we finished with the interview! Your score is {int(session.score)} percents. Have a good day."
 
         return Response({
             "ai_text": ai_text,

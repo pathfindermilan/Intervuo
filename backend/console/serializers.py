@@ -389,13 +389,16 @@ class GetOrderSerializer(serializers.ModelSerializer):
         if knowledge_field is None:
             return None
 
-        item = knowledge_field.knowledgefileitem
-        files = [
-            {
-                'file_url': item.file_item.url if item.file_item else None,
-                'status': item.status_url
-            }
-        ]
+        try:
+            item = knowledge_field.knowledgefileitem
+            files = [
+                {
+                    'file_url': item.file_item.url if item.file_item else None,
+                    'status': item.status_url
+                }
+            ]
+        except:
+            files = []
 
         return {
             'agent_llm': knowledge_field.agent_llm if knowledge_field.agent_llm else None,
