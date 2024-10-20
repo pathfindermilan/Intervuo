@@ -120,12 +120,11 @@ class Identity(models.Model):
 class Behaviour(models.Model):
     agent_greeting = models.CharField(
         max_length=250,
-        default = "Hello! I am your AI interviewer. Please describe your experience and skills related to the position you're applying for"
+        default = "Hello! I am your AI interviewer. Shall we start with basic setup before starting the real journey?"
     )
     agent_prompt = models.TextField(
         default='''
-        As an AI interviewer, your role is to conduct an interview by assessing the candidate's skills and experience.
-        Begin by acknowledging the candidate's readiness. Prompt the candidate to explain their skills and areas of expertise.
+        As an AI interviewer, your role is to conduct an interview by combining candidate's skills and experience and other user's data.
         If the candidate meets the basic requirements for the position, proceed to ask between 3 and 10 relevant questions.
         Evaluate each response based on predefined criteria and accumulate a score.
         If the candidate does not meet initial requirements, gently inform them.
@@ -208,13 +207,26 @@ class Order(models.Model):
 
 class Applicant(models.Model):
     email = models.EmailField(max_length=70, blank=False, unique=True)
+    name = models.TextField(null=True, blank=True, default = '')
     skills = models.TextField(null=True, blank=True, default = '')
+    level = models.TextField(null=True, blank=True, default = '')
+    past_experience = models.TextField(null=True, blank=True, default = '')
+    impressive_work = models.TextField(null=True, blank=True, default = '')
+    excitement = models.TextField(null=True, blank=True, default = '')
+    other_information = models.TextField(null=True, blank=True, default = '')
 
 class Session(models.Model):
     order = models.ForeignKey(Order, on_delete = models.CASCADE, related_name='+', blank=False, null = False)
     n_questions = models.IntegerField(default=0)
+    get_just_happend = models.BooleanField(default=False)
+    last_info_msg_ai = models.TextField(null=True, blank=True, default = '')
+    last_info_msg_human = models.TextField(null=True, blank=True, default = '')
     last_question = models.TextField(null=True, blank=True, default = '')
     last_answer  = models.TextField(null=True, blank=True, default = '')
+
+    init = models.BooleanField(default=False)
+    ready = models.BooleanField(default=False)
+
     score = models.FloatField(
         blank=False,
         default=0.0,
@@ -235,4 +247,3 @@ class Session(models.Model):
         ]
     )
     applicant = models.OneToOneField(Applicant, on_delete=models.CASCADE)
-    ready = models.BooleanField(default=False)

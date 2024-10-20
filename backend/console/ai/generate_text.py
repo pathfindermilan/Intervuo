@@ -17,7 +17,8 @@ class AIInterviewer:
         Number of Questions Asked: {n_questions}
         Current Score: {current_score}
         Based on the information above, generate the next interview question. The question should be relevant to the previous question and answer, and appropriate for the current stage of the interview (considering the number of questions asked and the current score).
-        DO NOT INCLUDE ANY GREETING TO THE USER, be professional.
+        Be professional, but include some phrases like : "Good answer", "Not bad" or something like that before the genrated question.
+        Decide the init phrase based on how relevant is Last Question with Human's Answer.
         Next Question:
         """
 
@@ -91,9 +92,6 @@ def ai_interviewer(text, session):
             n_questions=session.n_questions,
             current_score=session.score
         )
-
-    session.last_answer = text
-    session.last_question = next_question
 
     session.save()
 
