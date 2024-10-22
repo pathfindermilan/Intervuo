@@ -115,7 +115,7 @@ class Identity(models.Model):
 
     voice = models.CharField(max_length=9, choices=VOICE_CHOICES, default=VOICE_ADAM)
 
-    avatar = models.ImageField(upload_to='avatars/', null=True, blank=True)
+    avatar = models.URLField(max_length=200, null=True, blank=True)
 
 class Behaviour(models.Model):
     agent_greeting = models.CharField(

@@ -101,8 +101,8 @@ class ManageAgentViewSet(ModelViewSet):
         if instance.agent:
             if hasattr(instance.agent, 'identity'):
                 identity = instance.agent.identity
-                if identity.avatar:
-                    identity.avatar.delete(save=False)
+                # if identity.avatar:
+                #     identity.avatar.delete(save=False)
                 identity.delete()
 
             if hasattr(instance.agent, 'behaviour'):

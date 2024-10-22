@@ -179,16 +179,16 @@ class OrderSerializer(serializers.ModelSerializer):
                 customer=customer_instance,
                 **validated_data
             )
-            avatar_instance = order.agent.identity.avatar
-            if avatar_instance:
-                _ , avatar_file_name = avatar_instance.name.split('/')
-                avatar_new_name = f"{order.id}__{avatar_file_name}"
+            # avatar_instance = order.agent.identity.avatar
+            # if avatar_instance:
+            #     _ , avatar_file_name = avatar_instance.name.split('/')
+            #     avatar_new_name = f"{order.id}__{avatar_file_name}"
 
-                with avatar_instance.open('rb') as f:
-                    avatar_content = f.read()
-                avatar_instance.delete(save=False)
-                avatar_instance.save(avatar_new_name, ContentFile(avatar_content), save=False)
-                order.agent.identity.save()
+            #     with avatar_instance.open('rb') as f:
+            #         avatar_content = f.read()
+            #     avatar_instance.delete(save=False)
+            #     avatar_instance.save(avatar_new_name, ContentFile(avatar_content), save=False)
+            #     order.agent.identity.save()
 
             try:
                 fileitem_instance = order.agent.knowledge.knowledgefileitem.file_item
@@ -316,7 +316,7 @@ class GetOrdersSerializer(serializers.ModelSerializer):
 
     def get_avatar(self, order):
             avatar_field = getattr(order.agent.identity, 'avatar', None)
-            return avatar_field.url if avatar_field else None
+            return avatar_field if avatar_field else None
 
     def get_agent_name(self, order):
         return getattr(order.agent.identity, 'agent_name', None) if order.agent.identity else None
@@ -365,7 +365,7 @@ class GetOrderSerializer(serializers.ModelSerializer):
             'agent_name': identity_field.agent_name,
             'language': identity_field.language,
             'voice': identity_field.voice,
-            'avatar': identity_field.avatar.url if identity_field.avatar else None
+            'avatar': identity_field.avatar if identity_field.avatar else None
         }
 
     def get_behaviour(self, order):
