@@ -2,4 +2,4 @@
 .env
 *.log
 
-/media/*
+/media/files/*

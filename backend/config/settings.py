@@ -198,3 +198,21 @@ EMAIL_CONFIRMATION_EXPIRATION_TIME = os.getenv('EMAIL_CONFIRMATION_EXPIRATION_TI
 DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL')
 
 CELERY_BROKER_URL=os.getenv('CELERY_BROKER_URL')
+
+
+VOICE_MAP = {
+    'adam': 'pNInz6obpgDQGcFmaJgB',
+    'alice': 'Xb7hH8MSUJpSbSDYk0k2',
+    'bill': 'pqHfZKP75CvOlQylNhV4',
+    'brian': 'nPczCjzI2devNBz1zQrb',
+    'callum': 'N2lVS1w4EtoT3dr4eOWO',
+    'charlie': 'IKne3meq5aSn9XLyUdCD',
+    'charlotte': 'XB0fDUnXU5powFXDhCwa',
+    'chris': 'iP95p4xoKVk53GoZ742B',
+    'daniel': 'onwK4e9ZLuTAKqWW03F9',
+    'george': 'JBFqnCBsd6RMkjVDRZzb',
+    'liam': 'TX3LPaxmHKxFdv7VOQHJ',
+    'lily': 'pFZP5JQG7iQjIQuC4Bku',
+    'matilda': 'XrExE9yKIg1WjnnlVkGX',
+    'sarah': 'EXAVITQu4vr4xnSDxMaL'
+}

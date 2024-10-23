@@ -3,6 +3,7 @@ from console.models import Agent, Behaviour, Customer, Identity, \
                             Knowledge, KnowledgeFileItem, Order
 from django.db import transaction
 from django.core.files.base import ContentFile
+from django.conf import settings
 
 class IdentitySerializer(serializers.ModelSerializer):
     class Meta:
@@ -325,7 +326,15 @@ class GetOrdersSerializer(serializers.ModelSerializer):
         return getattr(order.agent.identity, 'language', None) if order.agent.identity else None
 
     def get_voice(self, order):
-        return getattr(order.agent.identity, 'voice', None) if order.agent.identity else None
+        voice_name = getattr(order.agent.identity, 'voice')
+        voice_id = settings.VOICE_MAP.get(voice_name)
+
+        if voice_name and voice_id:
+            return {
+                'voice_id': voice_id,
+                'voice_name': voice_name
+            }
+        return None
 
     def get_agent_llm(self, order):
         return getattr(order.agent.knowledge, 'agent_llm', None) if order.agent.knowledge else None
@@ -361,10 +370,16 @@ class GetOrderSerializer(serializers.ModelSerializer):
         if identity_field is None:
             return None
 
+        voice_name = identity_field.voice
+        voice_id = settings.VOICE_MAP.get(voice_name)
+
         return {
             'agent_name': identity_field.agent_name,
             'language': identity_field.language,
-            'voice': identity_field.voice,
+            'voice': {
+                'voice_id': voice_id,
+                'voice_name': voice_name
+            },
             'avatar': identity_field.avatar if identity_field.avatar else None
         }
 

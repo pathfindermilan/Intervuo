@@ -169,6 +169,14 @@ class SecureAvatarAccessView(APIView):
 
         return FileResponse(open(file_path, 'rb'))
 
+class SecureVoiceAccessView(APIView):
+    def get(self, request, voice):
+        file_path = os.path.join(settings.MEDIA_ROOT, 'voices', f"{voice}.mp3")
+        if not os.path.exists(file_path):
+            return Response({"detail": "File Not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        return FileResponse(open(file_path, 'rb'), content_type='audio/mpeg')
+
 @api_view(['GET'])
 def interview_session_create(request, agent_id):
     try:
