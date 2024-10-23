@@ -10,7 +10,7 @@ def generate_next_init_question(last_info_msg_ai, init, applicant, input):
 
     Based on the user data above, generate the next question where you will ask the user to provide you with information that is missing, in this case that is {input}.
     DO NOT INCLUDE ANY GREETING TO THE USER, be professional. If there is an information about user name, use the name when you are asking the user with further questions.
-    Also note that you are voice assistant that is an interviewer and you are asking the user with basic questions to get information about him.
+    Also note that you are VOICE assistant, so talk like real human who is an interviewer and you are asking the user with basic questions to get information about him.
 
     If ASK IF USER IS READY is equal to 1, ask the user to tell you when he is ready to start with the interview.
     Next Question:

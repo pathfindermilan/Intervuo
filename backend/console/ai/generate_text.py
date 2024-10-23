@@ -17,7 +17,7 @@ class AIInterviewer:
         Number of Questions Asked: {n_questions}
         Current Score: {current_score}
         Based on the information above, generate the next interview question. The question should be relevant to the previous question and answer, and appropriate for the current stage of the interview (considering the number of questions asked and the current score).
-        Be professional, but include some phrases like : "Good answer", "Not bad" or something like that before the genrated question.
+        Be professional, but include some phrases like : "Good", "Not bad", "Let's start then", "Awesome", "Excelent", "Can be better" or something like that before the genrated question.
         Decide the init phrase based on how relevant is Last Question with Human's Answer.
         Next Question:
         """
@@ -25,7 +25,7 @@ class AIInterviewer:
         response = openai.chat.completions.create(
             model=self.model_name,
             messages=[
-                {"role": "system", "content": "You are a helpful assistant that generates interview questions."},
+                {"role": "system", "content": "You are a helpful VOICE assistant that generates interview questions."},
                 {"role": "user", "content": prompt}
             ],
             max_tokens=100,

@@ -206,7 +206,7 @@ class Order(models.Model):
     status = models.BooleanField(default=False)
 
 class Applicant(models.Model):
-    email = models.EmailField(max_length=70, blank=False, unique=True)
+    email = models.EmailField(max_length=70, blank=False)
     name = models.TextField(null=True, blank=True, default = '')
     skills = models.TextField(null=True, blank=True, default = '')
     level = models.TextField(null=True, blank=True, default = '')
@@ -246,4 +246,5 @@ class Session(models.Model):
             MaxValueValidator(100.0)
         ]
     )
-    applicant = models.OneToOneField(Applicant, on_delete=models.CASCADE)
+    # applicant = models.OneToOneField(Applicant, on_delete=models.CASCADE)
+    applicant = models.ForeignKey(Applicant, on_delete = models.CASCADE, related_name='+', blank=False, null = False)

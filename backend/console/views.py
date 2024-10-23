@@ -195,7 +195,11 @@ def interview_session_create(request, agent_id):
                 return Response({"detail": "Email is missing"}, status=status.HTTP_403_FORBIDDEN)
 
         with transaction.atomic():
-            applicant, _ = Applicant.objects.get_or_create(email = user_email, name = first_name)
+            applicant, _ = Applicant.objects.get_or_create(email = user_email)
+            print(applicant)
+            applicant.name = first_name
+            applicant.save()
+
             session, session_created = Session.objects.get_or_create(order=order, applicant=applicant)
             session.ready = False
             session.save()
@@ -203,7 +207,7 @@ def interview_session_create(request, agent_id):
             if session_created:
                 greeting = order.agent.behaviour.agent_greeting
             else:
-                greeting = f"Hello again, {session.order.identity.agent_name} here. I am your interviewer and you and I have an open interview session. Shall we continue?"
+                greeting = f"Hello again, {session.order.agent.identity.agent_name} here. I am your interviewer and you and I have an open interview session. Shall we continue?"
             session.get_just_happend = True
             session.ready = False
             session.last_info_msg_ai = greeting
