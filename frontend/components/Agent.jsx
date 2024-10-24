@@ -1,30 +1,80 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import Head from 'next/head';
 import axios from 'axios';
+import { useSelector } from 'react-redux';
 
 const AgentTalk = () => {
+  const email = useSelector((state) => state.chat.email);
   const { id } = useParams();
-  const [isTalking, setIsTalking] = useState(false);
-  const [transcript, setTranscript] = useState('');
   const [showAlert, setShowAlert] = useState(false);
   const [agentName, setAgentName] = useState('');
-  const [selectedVoice, setSelectedVoice] = useState('Xb7hH8MSUJpSbSDYk0k2');
-  const recognitionRef = useRef(null);
+  const [selectedVoice, setSelectedVoice] = useState('');
   const audioRef = useRef(null);
-  const timeoutRef = useRef(null);
   const videoRef = useRef(null);
-  const agentId = localStorage.getItem("currentAgentId");
-  const storedAgentName = localStorage.getItem('currentAgentName');
-  const storedVoiceId = localStorage.getItem('selectedVoiceId');
-  const XI_API_KEY = process.env.NEXT_PUBLIC_XI_API_KEY;
+  const [agentId, setAgentId] = useState(null);
+  const [token, setToken] = useState(null);
+  const hasGreetingRun = useRef(false);
+  const [isListening, setIsListening] = useState(false);
+  const [transcript, setTranscript] = useState('');
+  const recognitionRef = useRef(null);
+  const timeoutRef = useRef(null);
+
+
+  const greeting = useCallback(async () => {
+    if (!agentId || !token || hasGreetingRun.current) return;
+    
+    try {
+      hasGreetingRun.current = true;
+      const response = await fetch(`${process.env.NEXT_PUBLIC_SERVER}/api/console/sync/${agentId}/`, {
+        method: 'GET',
+        headers: {
+          "Content-Type": "application/json",
+          "User-Agent": "insomnia/9.3.2",
+          Authorization: `JWT ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+
+      const responseData = await response.json();
+      if (responseData.ai_text) {
+        generateSpeech(responseData.ai_text);
+      } else {
+        console.error('AI text not found in the response');
+        setShowAlert(true);
+        setTimeout(() => setShowAlert(false), 5000);
+      }
+    } catch (error) {
+      console.error('Error sending audio to backend:', error);
+      setShowAlert(true);
+      setTimeout(() => setShowAlert(false), 5000);
+      hasGreetingRun.current = false;
+    }
+  }, [agentId, token]);
+
+ 
+
+
+  useEffect(()=>{
+    const storedAgentId = localStorage.getItem("currentAgentId");
+    const storedAgentName = localStorage.getItem('currentAgentName');
+    const storedToken = localStorage.getItem("access");
+    const storedVoiceId = localStorage.getItem('voiceID');
+    
+    if (storedVoiceId) {
+      setSelectedVoice(storedVoiceId);
+    }
+    
+    setAgentId(storedAgentId);
+    setAgentName(storedAgentName || "unknown");
+    setToken(storedToken);
+  },[])
 
   useEffect(() => {
-    sendAudioToBackend('hello')
-
-    setAgentName(storedAgentName || "unknown");
-    setSelectedVoice(storedVoiceId || "Xb7hH8MSUJpSbSDYk0k2");
-
+   
     if (typeof window !== 'undefined' && 'webkitSpeechRecognition' in window) {
       const SpeechRecognition = window.webkitSpeechRecognition;
       recognitionRef.current = new SpeechRecognition();
@@ -36,15 +86,18 @@ const AgentTalk = () => {
         const latestTranscript = latestResult[0].transcript;
         setTranscript(latestTranscript);
 
+        // Clear any existing timeout
         if (timeoutRef.current) clearTimeout(timeoutRef.current);
 
-        if (latestResult.isFinal) {
-          sendAudioToBackend(latestTranscript);
-        }
+        // Set new timeout to detect silence
+        timeoutRef.current = setTimeout(async() =>  {
+    
+          await sendTranscriptToBackend(latestTranscript);
+        }, 1000); // Wait 1 second of silence before sending
       };
 
       recognitionRef.current.onend = () => {
-        if (isTalking) {
+        if (isListening) {
           recognitionRef.current.start();
         }
       };
@@ -58,34 +111,45 @@ const AgentTalk = () => {
         clearTimeout(timeoutRef.current);
       }
     };
-  }, [isTalking]);
+  }, [isListening]);
 
-  const toggleTalking = () => {
-    setIsTalking(prevState => !prevState);
-    if (!isTalking) {
+  const toggleListening = () => {
+    setIsListening(prev => !prev);
+    if (!isListening) {
       recognitionRef.current.start();
-      setTranscript('');
       videoRef.current.play();
+      setTranscript('');
     } else {
       recognitionRef.current.stop();
+      videoRef.current.pause();
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
       }
-      videoRef.current.pause();
     }
   };
 
-  const sendAudioToBackend = async (text) => {
-    if (!text.trim()) return;
-    console.log('Sending to backend:', text);
+
+  useEffect(() => {
+    if (agentId && token && !hasGreetingRun.current) {
+      greeting();
+    }
+  }, [agentId, token, greeting]);
+
+  const sendTranscriptToBackend = async (text) => {
+    if (!text.trim() || !agentId || !token) return;
+    console.log(text)
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_SERVER}/api/console/sync/${agentId}/`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_SERVER}/api/console/talk/${agentId}/`, {
         method: 'POST',
         headers: {
           "Content-Type": "application/json",
-          "User-Agent": "insomnia/9.3.2"
+          "User-Agent": "insomnia/9.3.2",
+          Authorization: `JWT ${token}`,
         },
-        body: JSON.stringify({ "human_text": text }),
+        body: JSON.stringify({
+          "email": email,
+          "human_text": text.trim()
+        }),
       });
 
       if (!response.ok) {
@@ -93,16 +157,13 @@ const AgentTalk = () => {
       }
 
       const responseData = await response.json();
-      console.log(responseData.ai_text);
       if (responseData.ai_text) {
-        generateSpeech(responseData.ai_text);
+        await generateSpeech(responseData.ai_text);
       } else {
-        console.error('AI text not found in the response');
-        setShowAlert(true);
-        setTimeout(() => setShowAlert(false), 5000);
+        throw new Error('AI text not found in the response');
       }
     } catch (error) {
-      console.error('Error sending audio to backend:', error);
+      console.error('Error sending text to backend:', error);
       setShowAlert(true);
       setTimeout(() => setShowAlert(false), 5000);
     }
@@ -123,7 +184,7 @@ const AgentTalk = () => {
         {
           headers: {
             'Accept': 'audio/mpeg',
-            'xi-api-key': XI_API_KEY,
+            'xi-api-key': process.env.NEXT_PUBLIC_XI_API_KEY,
             'Content-Type': 'application/json'
           },
           responseType: 'arraybuffer'
@@ -133,7 +194,7 @@ const AgentTalk = () => {
       const audioBlob = new Blob([response.data], { type: 'audio/mpeg' });
       const audioUrl = URL.createObjectURL(audioBlob);
       audioRef.current.src = audioUrl;
-      audioRef.current.play();
+      await audioRef.current.play();
     } catch (error) {
       console.error('Error generating speech:', error);
       setShowAlert(true);
@@ -153,21 +214,25 @@ const AgentTalk = () => {
             ref={videoRef}
             loop
             muted
+            controlsList="nodownload"
             className="w-full h-full object-cover"
           >
             <source src="/video.mp4" type="video/mp4" />
             Your browser does not support the video tag.
           </video>
         </div>
-        <div className="mb-8">
-          <button
-            onClick={toggleTalking}
-            className={`px-6 py-3 rounded-full ${
-              isTalking ? 'bg-red-600 hover:bg-red-700' : 'bg-blue-600 hover:bg-blue-700'
-            } transition-colors duration-300`}
-          >
-            {isTalking ? 'Stop Talking' : 'Start Talking'}
-          </button>
+        <div className="mb-8 ">
+        <button
+          onClick={toggleListening}
+          className={`w-full py-3 rounded-lg px-4 mb-4 ${
+            isListening 
+              ? 'bg-red-600 hover:bg-red-700' 
+              : 'bg-blue-600 hover:bg-blue-700'
+          } text-white transition-colors`}
+        >
+          {isListening ? 'Stop Listening' : 'Start Listening'}
+        </button>
+
         </div>
         <audio ref={audioRef} className="hidden" />
         {showAlert && (

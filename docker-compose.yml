@@ -20,6 +20,15 @@ services:
       - .:/app
       - media:/backend/media
 
+  frontend:
+    depends_on:
+      - backend
+    build: ./frontend
+    ports:
+      - 3000:3000
+    environment:
+      - NEXT_PUBLIC_SERVER=${NEXT_PUBLIC_SERVER}
+
   redis:
     image: redis:latest
     container_name: redis-container
