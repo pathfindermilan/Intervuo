@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
 import { Volume2 } from "lucide-react";
-import axios from "axios";
 import { createAgent } from '@/app/api/agents';
 import { useDispatch } from 'react-redux';
 import { setAgentId } from '@/store/ChatSlice';
@@ -30,7 +29,7 @@ const CreateAgentPage = () => {
     jobField: "",
     greeting: "",
     prompt: "",
-    llm: "gpt-4o",
+    llm: "",
     customKnowledge: "",
     files: [],
   });
@@ -61,7 +60,6 @@ const CreateAgentPage = () => {
     return () => clearInterval(timer);
   }, [countdown, showAlert]);
 
-  const XI_API_KEY = process.env.NEXT_PUBLIC_XI_API_KEY;
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -77,20 +75,23 @@ const CreateAgentPage = () => {
       alert("Please enter a job field first");
       return;
     }
+    
     setIsGeneratingAvatar(true);
     setShowAlert(true);
-    setCountdown(40);
+    setCountdown(10);
+    
     try {
       const avatarUrl = await GenerateAvatar(agentData.avatar);
-      if (avatarUrl) {
-        setAgentData(prevData => ({
-          ...prevData,
-          avatar: avatarUrl
-        }));
-      }
+      setAgentData(prevData => ({
+        ...prevData,
+        avatar: avatarUrl || DEFAULT_AVATAR_URL
+      }));
     } catch (error) {
-      console.error('Error generating avatar:', error);
-      alert('Failed to generate avatar. Please try again.');
+      //console.error('Error generating avatar:', error);
+      setAgentData(prevData => ({
+        ...prevData,
+        avatar: DEFAULT_AVATAR_URL
+      }));
     } finally {
       setIsGeneratingAvatar(false);
       setShowAlert(false);
@@ -150,6 +151,7 @@ const CreateAgentPage = () => {
         return;
       }
       const result = await createAgent(formData, token);
+
       dispatch(setAgentId(result));
       router.push('/assistants');
     } catch (error) {
@@ -305,7 +307,8 @@ const CreateAgentPage = () => {
                       value={agentData.agent_llm}
                       onChange={handleInputChange}
                       className="w-full bg-white bg-opacity-20 rounded-md p-3 text-white"
-                    >
+                    >  
+                      <option value="" className="bg-gray-800">Select LLM</option>
                       <option value="gpt-4o-mini" className=" bg-gray-800">
                         GPT-4o-Mini
                       </option>
