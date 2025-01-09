@@ -24,7 +24,7 @@ Check out our demo video to see **Intervuo** in action.
 - **Django**: Backend services to handle API requests and data management from AI site.
 
 ## 🌐 How to Use Intervuo
-1. **Register**: Sign up on the **Intero** web application.
+1. **Register**: Sign up on the **Intervuo** web application.
 2. **Configure AI Interviewer**: 
    - Enter the interviewer's name, language, and voice.
    - Customize the interview questions based on the job role.
